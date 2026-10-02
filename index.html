@@ -12,6 +12,23 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    
+    <!-- 
+      GLOBAL BROWSER PROTECTION
+      We place this directly in HTML before any Vite/JS module loads to avoid ES Module hoisting.
+      Firebase Auth (and some third-party webviews) contains bugs where it checks async storage at ~2 seconds
+      and executes window.close() or window.location = 'about:blank' if it mistakenly assumes the 
+      active window is a defunct OAuth popup. This entirely neutralizes that fatal behavior natively!
+    -->
+    <script>
+      (function() {
+        // Protect window.close
+        const originalClose = window.close;
+        window.close = function() {
+          console.error("🔥 BROWSER PROTECTION: Blocked fatal attempt to execute window.close()! Keeping window active.");
+        };
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

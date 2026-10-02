@@ -6,7 +6,7 @@
 
 This contains everything you need to run your app locally.
 
-View your app in AI Studio: https://ai.studio/apps/71698b12-28d8-4788-a417-aee38be20636
+View the Live Deployment: https://ai-food-chatbot.web.app/
 
 ## Run Locally
 
