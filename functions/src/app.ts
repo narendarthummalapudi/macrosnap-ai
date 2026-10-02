@@ -744,7 +744,7 @@ app.post("/api/video", async (req, res) => {
 // ==================================================
 // CUSTOM SECURE OTP AUTH SYSTEM (EMAIL & WHATSAPP)
 // ==================================================
-import { initializeApp, getApps } from "firebase-admin/app";
+import { initializeApp, getApps, cert } from "firebase-admin/app";
 import { getAuth } from "firebase-admin/auth";
 import nodemailer from "nodemailer";
 import crypto from "crypto";
@@ -766,10 +766,27 @@ if (fs.existsSync(firebaseConfigPath)) {
 // Initialize admin SDK
 if (getApps().length === 0) {
   try {
-    initializeApp({
-      projectId: firebaseProjectId,
-    });
-    console.log("Firebase Admin SDK initialized successfully for project:", firebaseProjectId);
+    const projectId = process.env.FIREBASE_PROJECT_ID || firebaseProjectId;
+    const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
+    const privateKey = process.env.FIREBASE_PRIVATE_KEY
+      ? process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n')
+      : undefined;
+
+    if (projectId && clientEmail && privateKey) {
+      initializeApp({
+        credential: cert({
+          projectId,
+          clientEmail,
+          privateKey
+        })
+      });
+      console.log("Firebase Admin SDK initialized successfully with credentials for project:", projectId);
+    } else {
+      initializeApp({
+        projectId: firebaseProjectId,
+      });
+      console.log("Firebase Admin SDK initialized successfully for project:", firebaseProjectId);
+    }
   } catch (err: any) {
     console.error("Failed to initialize Firebase Admin SDK:", err.message);
   }
