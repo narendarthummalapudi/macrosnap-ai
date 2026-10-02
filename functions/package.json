@@ -1,14 +1,13 @@
 {
   "name": "functions",
   "version": "1.0.0",
-  "description": "",
-  "main": "lib/index.js",
+  "main": "lib/src/index.js",
   "engines": {
     "node": "20.x"
   },
   "scripts": {
     "build": "tsc",
-    "start": "node lib/index.js",
+    "start": "node lib/src/index.js",
     "dev": "tsc -w & node lib/app.js",
     "deploy": "firebase deploy --only functions",
     "logs": "firebase functions:log"
