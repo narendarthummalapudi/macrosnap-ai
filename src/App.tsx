@@ -1490,6 +1490,9 @@ export default function App() {
       reader.onload = () => {
         setSelectedImage(reader.result as string);
         setErrorMsg(null);
+        if (fileInputRef.current) {
+          fileInputRef.current.value = "";
+        }
       };
       reader.readAsDataURL(file);
     }
@@ -2355,6 +2358,7 @@ export default function App() {
                       key={item.id}
                       onClick={() => {
                         setActiveSection(item.id as ActiveSection);
+                        if (item.id === "analyzer") setShowImageSourceModal(true);
                         setMobileMenuOpen(false);
                       }}
                       className={`w-full flex items-center gap-3 px-3.5 py-3 rounded-2xl text-xs font-bold transition-all cursor-pointer ${isActive
@@ -2425,7 +2429,10 @@ export default function App() {
             return (
               <button
                 key={item.id}
-                onClick={() => setActiveSection(item.id as ActiveSection)}
+                onClick={() => {
+                  setActiveSection(item.id as ActiveSection);
+                  if (item.id === "analyzer") setShowImageSourceModal(true);
+                }}
                 className={`w-full flex items-center justify-between px-3.5 py-3 rounded-2xl text-xs font-bold transition-all cursor-pointer group ${isActive
                   ? "bg-gradient-to-r from-cyan-500/15 via-blue-600/15 to-violet-600/15 text-cyan-600 dark:text-cyan-300 border border-cyan-500/30 dark:border-cyan-400/25 shadow-sm"
                   : "text-slate-600 dark:text-slate-400 hover:bg-slate-100/80 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white"
@@ -5231,7 +5238,10 @@ export default function App() {
         </button>
 
         <button
-          onClick={() => setActiveSection("analyzer")}
+          onClick={() => {
+            setActiveSection("analyzer");
+            setShowImageSourceModal(true);
+          }}
           className={`flex flex-col items-center gap-1 p-1.5 rounded-2xl text-[10px] font-bold transition-all ${activeSection === "analyzer" ? "text-cyan-500 scale-105" : "text-slate-400 hover:text-slate-200"
             }`}
         >
