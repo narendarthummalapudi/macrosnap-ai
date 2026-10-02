@@ -45,7 +45,8 @@ import {
   Video,
   Search,
   Heart,
-  Trash2
+  Trash2,
+  ImageIcon
 } from "lucide-react";
 import {
   auth,
@@ -260,6 +261,9 @@ export default function App() {
   const [savedMeals, setSavedMeals] = useState<MealRecord[]>([]);
   const [inputText, setInputText] = useState("");
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [showImageSourceModal, setShowImageSourceModal] = useState(false);
+  const [showCameraView, setShowCameraView] = useState(false);
+  const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analyzingStep, setAnalyzingStep] = useState(0);
   const [analysisResult, setAnalysisResult] = useState<any | null>(null);
@@ -356,6 +360,7 @@ export default function App() {
   const [videoResult, setVideoResult] = useState<any | null>(null);
   const [videoError, setVideoError] = useState<string | null>(null);
 
+  const videoRef = useRef<HTMLVideoElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const audioInputRef = useRef<HTMLInputElement>(null);
   const chatInputRef = useRef<HTMLInputElement>(null);
@@ -1431,6 +1436,45 @@ export default function App() {
       setSavedMealCheckmark(false);
     } finally {
       setIsSavingMealState(false);
+    }
+  };
+
+  // Native Image Capture
+  const handleOpenCamera = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: "environment" },
+        audio: false
+      });
+      setCameraStream(stream);
+      setShowCameraView(true);
+      setActiveSection("analyzer");
+    } catch (err: any) {
+      setErrorMsg("Camera permission denied or unavailable. Please use the gallery.");
+    }
+  };
+
+  const capturePhoto = () => {
+    if (videoRef.current) {
+      const canvas = document.createElement("canvas");
+      canvas.width = videoRef.current.videoWidth || 1080;
+      canvas.height = videoRef.current.videoHeight || 1920;
+      const ctx = canvas.getContext("2d");
+      if (ctx) {
+        ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
+        const dataUrl = canvas.toDataURL("image/jpeg", 0.9);
+        setSelectedImage(dataUrl);
+        stopCamera();
+        setShowCameraView(false);
+        setErrorMsg(null);
+      }
+    }
+  };
+
+  const stopCamera = () => {
+    if (cameraStream) {
+      cameraStream.getTracks().forEach((t) => t.stop());
+      setCameraStream(null);
     }
   };
 
@@ -2529,7 +2573,7 @@ export default function App() {
             <button
               onClick={() => {
                 setActiveSection("analyzer");
-                fileInputRef.current?.click();
+                setShowImageSourceModal(true);
               }}
               className="px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-xl bg-gradient-to-r from-cyan-500 via-blue-600 to-violet-600 hover:from-cyan-400 hover:to-violet-500 text-white font-bold text-xs transition-all shadow-md shadow-cyan-500/20 hover:shadow-cyan-500/35 hover:-translate-y-0.5 active:scale-95 flex items-center gap-1.5 cursor-pointer min-h-[38px]"
             >
@@ -2615,7 +2659,7 @@ export default function App() {
                       <button
                         onClick={() => {
                           setActiveSection("analyzer");
-                          fileInputRef.current?.click();
+                          setShowImageSourceModal(true);
                         }}
                         className="px-5 py-3 rounded-2xl bg-gradient-to-r from-cyan-500 via-blue-600 to-violet-600 hover:from-cyan-400 hover:to-violet-500 text-white font-bold text-xs sm:text-sm transition-all shadow-lg shadow-cyan-500/30 hover:shadow-cyan-500/50 hover:-translate-y-0.5 active:scale-95 flex items-center gap-2 cursor-pointer"
                       >
@@ -5055,7 +5099,7 @@ export default function App() {
                   onClick={() => {
                     setSelectedMealDetail(null);
                     setActiveSection("analyzer");
-                    setTimeout(() => fileInputRef.current?.click(), 100);
+                    setTimeout(() => setShowImageSourceModal(true), 100);
                   }}
                   className="flex-1 py-2.5 px-3 rounded-2xl border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 font-bold text-xs hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer flex items-center justify-center gap-1.5"
                 >
@@ -5083,6 +5127,94 @@ export default function App() {
                 </button>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Image Source Selection Modal */}
+      {showImageSourceModal && (
+        <div className="fixed inset-0 z-[60] bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-4 sm:p-0 animate-in fade-in duration-200">
+          <div className="bg-white dark:bg-[#0c1424] w-full sm:max-w-md rounded-t-3xl sm:rounded-3xl p-6 shadow-2xl border border-slate-200 dark:border-white/10 relative animate-in slide-in-from-bottom-[100%] sm:zoom-in-95 duration-300">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-xl font-black text-slate-900 dark:text-white">Add Food Image</h3>
+              <button
+                onClick={() => setShowImageSourceModal(false)}
+                className="p-2 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-3">
+              <button
+                onClick={() => {
+                  setShowImageSourceModal(false);
+                  handleOpenCamera();
+                }}
+                className="w-full p-4 rounded-2xl bg-cyan-50 dark:bg-cyan-950/30 border border-cyan-100 dark:border-cyan-500/20 hover:border-cyan-400 dark:hover:border-cyan-400 transition-colors flex items-center justify-start gap-4 text-left cursor-pointer group"
+              >
+                <div className="w-12 h-12 rounded-full bg-cyan-100 dark:bg-cyan-900/50 text-cyan-600 dark:text-cyan-400 flex items-center justify-center group-hover:scale-110 transition-transform shadow-sm">
+                  <Camera className="w-6 h-6" />
+                </div>
+                <div>
+                  <h4 className="text-sm font-bold text-slate-900 dark:text-white">Camera</h4>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">Take a new food photo</p>
+                </div>
+              </button>
+
+              <button
+                onClick={() => {
+                  setShowImageSourceModal(false);
+                  fileInputRef.current?.click();
+                }}
+                className="w-full p-4 rounded-2xl bg-violet-50 dark:bg-violet-950/30 border border-violet-100 dark:border-violet-500/20 hover:border-violet-400 dark:hover:border-violet-400 transition-colors flex items-center justify-start gap-4 text-left cursor-pointer group"
+              >
+                <div className="w-12 h-12 rounded-full bg-violet-100 dark:bg-violet-900/50 text-violet-600 dark:text-violet-400 flex items-center justify-center group-hover:scale-110 transition-transform shadow-sm">
+                  <ImageIcon className="w-6 h-6" />
+                </div>
+                <div>
+                  <h4 className="text-sm font-bold text-slate-900 dark:text-white">Gallery</h4>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">Choose an existing photo</p>
+                </div>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Live Camera View Overlay */}
+      {showCameraView && (
+        <div className="fixed inset-0 z-[70] bg-black flex flex-col animate-in fade-in duration-300">
+          <div className="p-4 flex justify-between items-center bg-black/50 absolute top-0 left-0 right-0 z-10 backdrop-blur-md">
+            <h3 className="text-white font-bold tracking-wide">Photo Capture</h3>
+            <button
+              onClick={() => { stopCamera(); setShowCameraView(false); }}
+              className="text-white p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors cursor-pointer"
+            >
+              <X className="w-6 h-6" />
+            </button>
+          </div>
+
+          <video
+            autoPlay
+            playsInline
+            className="flex-1 w-full h-full object-cover"
+            ref={(node) => {
+              // @ts-ignore - internal ref mutation
+              videoRef.current = node;
+              if (node && cameraStream && !node.srcObject) {
+                node.srcObject = cameraStream;
+              }
+            }}
+          />
+
+          <div className="p-6 pb-12 sm:pb-6 bg-black/80 backdrop-blur-xl absolute bottom-0 left-0 right-0 flex justify-center items-center">
+            <button
+              onClick={capturePhoto}
+              className="w-20 h-20 rounded-full border-4 border-white flex items-center justify-center p-1 active:scale-95 transition-transform cursor-pointer"
+            >
+              <div className="w-full h-full bg-white rounded-full transition-transform hover:scale-95" />
+            </button>
           </div>
         </div>
       )}
