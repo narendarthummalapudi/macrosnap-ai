@@ -670,7 +670,13 @@ export default function App() {
             protein: Number(data.protein) || 0,
             carbs: Number(data.carbs) || 0,
             fat: Number(data.fat) || 0,
-            createdAt: data.createdAt || "",
+            createdAt: typeof data.createdAt === 'string'
+              ? data.createdAt
+              : data.createdAt?.toDate
+                ? data.createdAt.toDate().toISOString()
+                : data.createdAt
+                  ? new Date(data.createdAt).toISOString()
+                  : "",
             searchGrounded: !!data.searchGrounded,
             imageUrl: data.imageUrl,
           });
@@ -993,7 +999,7 @@ export default function App() {
       const dateIsoPrefix = d.toISOString().split("T")[0];
 
       const mealsOnDay = savedMeals.filter(
-        (m) => m.createdAt && m.createdAt.startsWith(dateIsoPrefix)
+        (m) => typeof m.createdAt === 'string' && m.createdAt.startsWith(dateIsoPrefix)
       );
 
       let dayCalories = 0;
@@ -2013,8 +2019,8 @@ export default function App() {
                                     onKeyDown={(e) => handleOtpBoxKeyDown(e, index, emailOtpRefs)}
                                     onPaste={(e) => handleOtpBoxPaste(e, emailOtpRefs)}
                                     className={`w-full aspect-square text-center text-lg font-black rounded-xl sm:rounded-2xl border transition-all duration-200 outline-none tabular-nums min-h-[44px] ${char
-                                        ? "border-emerald-600/60 bg-emerald-50/40 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-200 shadow-xs"
-                                        : "border-gray-200 dark:border-gray-800 bg-gray-50/70 dark:bg-[#18211b] text-gray-900 dark:text-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/25 focus:scale-105"
+                                      ? "border-emerald-600/60 bg-emerald-50/40 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-200 shadow-xs"
+                                      : "border-gray-200 dark:border-gray-800 bg-gray-50/70 dark:bg-[#18211b] text-gray-900 dark:text-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/25 focus:scale-105"
                                       }`}
                                     required
                                   />
@@ -2167,8 +2173,8 @@ export default function App() {
                                     onKeyDown={(e) => handleOtpBoxKeyDown(e, index, whatsappOtpRefs)}
                                     onPaste={(e) => handleOtpBoxPaste(e, whatsappOtpRefs)}
                                     className={`w-full aspect-square text-center text-lg font-black rounded-xl sm:rounded-2xl border transition-all duration-200 outline-none tabular-nums min-h-[44px] ${char
-                                        ? "border-emerald-600/60 bg-emerald-50/40 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-200 shadow-xs"
-                                        : "border-gray-200 dark:border-gray-800 bg-gray-50/70 dark:bg-[#18211b] text-gray-900 dark:text-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/25 focus:scale-105"
+                                      ? "border-emerald-600/60 bg-emerald-50/40 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-200 shadow-xs"
+                                      : "border-gray-200 dark:border-gray-800 bg-gray-50/70 dark:bg-[#18211b] text-gray-900 dark:text-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/25 focus:scale-105"
                                       }`}
                                     required
                                   />
@@ -2308,8 +2314,8 @@ export default function App() {
                         setMobileMenuOpen(false);
                       }}
                       className={`w-full flex items-center gap-3 px-3.5 py-3 rounded-2xl text-xs font-bold transition-all cursor-pointer ${isActive
-                          ? "bg-gradient-to-r from-cyan-500/15 via-blue-500/15 to-violet-500/15 text-cyan-500 border border-cyan-500/30 shadow-xs"
-                          : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/60"
+                        ? "bg-gradient-to-r from-cyan-500/15 via-blue-500/15 to-violet-500/15 text-cyan-500 border border-cyan-500/30 shadow-xs"
+                        : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/60"
                         }`}
                     >
                       <Icon className={`w-4 h-4 ${isActive ? "text-cyan-400" : ""}`} />
@@ -2377,8 +2383,8 @@ export default function App() {
                 key={item.id}
                 onClick={() => setActiveSection(item.id as ActiveSection)}
                 className={`w-full flex items-center justify-between px-3.5 py-3 rounded-2xl text-xs font-bold transition-all cursor-pointer group ${isActive
-                    ? "bg-gradient-to-r from-cyan-500/15 via-blue-600/15 to-violet-600/15 text-cyan-600 dark:text-cyan-300 border border-cyan-500/30 dark:border-cyan-400/25 shadow-sm"
-                    : "text-slate-600 dark:text-slate-400 hover:bg-slate-100/80 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white"
+                  ? "bg-gradient-to-r from-cyan-500/15 via-blue-600/15 to-violet-600/15 text-cyan-600 dark:text-cyan-300 border border-cyan-500/30 dark:border-cyan-400/25 shadow-sm"
+                  : "text-slate-600 dark:text-slate-400 hover:bg-slate-100/80 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white"
                   }`}
               >
                 <div className="flex items-center gap-3">
@@ -2510,8 +2516,8 @@ export default function App() {
               onClick={handleSendToWhatsApp}
               disabled={!hasInteracted || isSendingWhatsApp}
               className={`px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer min-h-[38px] ${hasInteracted
-                  ? "bg-emerald-600 hover:bg-emerald-500 text-white shadow-md shadow-emerald-600/20 active:scale-95"
-                  : "bg-slate-100 dark:bg-[#121926] text-slate-400 cursor-not-allowed border border-slate-200 dark:border-slate-800"
+                ? "bg-emerald-600 hover:bg-emerald-500 text-white shadow-md shadow-emerald-600/20 active:scale-95"
+                : "bg-slate-100 dark:bg-[#121926] text-slate-400 cursor-not-allowed border border-slate-200 dark:border-slate-800"
                 }`}
             >
               <Smartphone className="w-3.5 h-3.5" />
@@ -2882,8 +2888,8 @@ export default function App() {
                       onClick={handleStartVoiceSearch}
                       disabled={isListening}
                       className={`p-2.5 rounded-xl transition-all cursor-pointer flex items-center justify-center ${isListening
-                          ? "bg-red-500 text-white animate-pulse shadow-lg shadow-red-500/40 ring-4 ring-red-500/20"
-                          : "bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-cyan-300 hover:bg-cyan-500/20 hover:border-cyan-400"
+                        ? "bg-red-500 text-white animate-pulse shadow-lg shadow-red-500/40 ring-4 ring-red-500/20"
+                        : "bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-cyan-300 hover:bg-cyan-500/20 hover:border-cyan-400"
                         }`}
                       title="Speak your question"
                     >
@@ -3339,10 +3345,10 @@ export default function App() {
                         onClick={handleSaveMealExplicit}
                         disabled={isSavingMealState}
                         className={`flex-1 min-w-[160px] py-3 px-5 rounded-2xl font-bold text-xs sm:text-sm transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer shadow-lg active:scale-95 ${savedMealCheckmark
-                            ? "bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-emerald-500/30 scale-102"
-                            : isSavingMealState
-                              ? "bg-slate-700 text-slate-300 cursor-not-allowed opacity-90"
-                              : "bg-gradient-to-r from-cyan-500 via-blue-600 to-violet-600 hover:from-cyan-400 hover:to-violet-500 text-white shadow-cyan-500/25 hover:shadow-cyan-500/40 hover:-translate-y-0.5"
+                          ? "bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-emerald-500/30 scale-102"
+                          : isSavingMealState
+                            ? "bg-slate-700 text-slate-300 cursor-not-allowed opacity-90"
+                            : "bg-gradient-to-r from-cyan-500 via-blue-600 to-violet-600 hover:from-cyan-400 hover:to-violet-500 text-white shadow-cyan-500/25 hover:shadow-cyan-500/40 hover:-translate-y-0.5"
                           }`}
                       >
                         {isSavingMealState ? (
@@ -3452,8 +3458,8 @@ export default function App() {
                     <button
                       onClick={() => setChatbotMode("fast")}
                       className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${chatbotMode === "fast"
-                          ? "bg-white dark:bg-[#121814] text-emerald-800 dark:text-emerald-300 shadow-xs"
-                          : "text-gray-500"
+                        ? "bg-white dark:bg-[#121814] text-emerald-800 dark:text-emerald-300 shadow-xs"
+                        : "text-gray-500"
                         }`}
                     >
                       ⚡ Fast
@@ -3461,8 +3467,8 @@ export default function App() {
                     <button
                       onClick={() => setChatbotMode("general")}
                       className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${chatbotMode === "general"
-                          ? "bg-white dark:bg-[#121814] text-emerald-800 dark:text-emerald-300 shadow-xs"
-                          : "text-gray-500"
+                        ? "bg-white dark:bg-[#121814] text-emerald-800 dark:text-emerald-300 shadow-xs"
+                        : "text-gray-500"
                         }`}
                     >
                       🥗 General
@@ -3470,8 +3476,8 @@ export default function App() {
                     <button
                       onClick={() => setChatbotMode("complex")}
                       className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${chatbotMode === "complex"
-                          ? "bg-white dark:bg-[#121814] text-emerald-800 dark:text-emerald-300 shadow-xs"
-                          : "text-gray-500"
+                        ? "bg-white dark:bg-[#121814] text-emerald-800 dark:text-emerald-300 shadow-xs"
+                        : "text-gray-500"
                         }`}
                     >
                       🧠 Deep
@@ -3481,8 +3487,8 @@ export default function App() {
                   <button
                     onClick={() => setUseSearchGrounding(!useSearchGrounding)}
                     className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all border cursor-pointer flex items-center gap-1.5 ${useSearchGrounding
-                        ? "bg-blue-600 text-white border-blue-600 shadow-xs"
-                        : "bg-white dark:bg-[#1a231d] text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700"
+                      ? "bg-blue-600 text-white border-blue-600 shadow-xs"
+                      : "bg-white dark:bg-[#1a231d] text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700"
                       }`}
                   >
                     <Globe className="w-3.5 h-3.5" />
@@ -3521,8 +3527,8 @@ export default function App() {
 
                     <div
                       className={`max-w-[85%] sm:max-w-[75%] rounded-3xl p-4 text-sm leading-relaxed ${msg.role === "user"
-                          ? "bg-gradient-to-r from-emerald-600 to-green-600 text-white rounded-br-xs shadow-md shadow-emerald-950/10"
-                          : "bg-gray-100/90 dark:bg-[#18211b] text-gray-900 dark:text-gray-100 border border-gray-200/60 dark:border-gray-800 rounded-bl-xs shadow-xs"
+                        ? "bg-gradient-to-r from-emerald-600 to-green-600 text-white rounded-br-xs shadow-md shadow-emerald-950/10"
+                        : "bg-gray-100/90 dark:bg-[#18211b] text-gray-900 dark:text-gray-100 border border-gray-200/60 dark:border-gray-800 rounded-bl-xs shadow-xs"
                         }`}
                     >
                       {msg.image && (
@@ -3695,8 +3701,8 @@ export default function App() {
                     type="button"
                     onClick={handleToggleVoice}
                     className={`p-2 rounded-full transition-colors cursor-pointer ${isListening
-                        ? "bg-red-500 text-white animate-pulse"
-                        : "text-gray-500 hover:text-emerald-600"
+                      ? "bg-red-500 text-white animate-pulse"
+                      : "text-gray-500 hover:text-emerald-600"
                       }`}
                     title="Voice input"
                   >
@@ -3744,8 +3750,8 @@ export default function App() {
                   <button
                     onClick={() => setNutritionTimeRange("today")}
                     className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${nutritionTimeRange === "today"
-                        ? "bg-white dark:bg-[#121814] text-emerald-800 dark:text-emerald-300 shadow-xs"
-                        : "text-gray-500 hover:text-gray-900 dark:hover:text-white"
+                      ? "bg-white dark:bg-[#121814] text-emerald-800 dark:text-emerald-300 shadow-xs"
+                      : "text-gray-500 hover:text-gray-900 dark:hover:text-white"
                       }`}
                   >
                     Today
@@ -3753,8 +3759,8 @@ export default function App() {
                   <button
                     onClick={() => setNutritionTimeRange("week")}
                     className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${nutritionTimeRange === "week"
-                        ? "bg-white dark:bg-[#121814] text-emerald-800 dark:text-emerald-300 shadow-xs"
-                        : "text-gray-500 hover:text-gray-900 dark:hover:text-white"
+                      ? "bg-white dark:bg-[#121814] text-emerald-800 dark:text-emerald-300 shadow-xs"
+                      : "text-gray-500 hover:text-gray-900 dark:hover:text-white"
                       }`}
                   >
                     This Week
@@ -3762,8 +3768,8 @@ export default function App() {
                   <button
                     onClick={() => setNutritionTimeRange("month")}
                     className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${nutritionTimeRange === "month"
-                        ? "bg-white dark:bg-[#121814] text-emerald-800 dark:text-emerald-300 shadow-xs"
-                        : "text-gray-500 hover:text-gray-900 dark:hover:text-white"
+                      ? "bg-white dark:bg-[#121814] text-emerald-800 dark:text-emerald-300 shadow-xs"
+                      : "text-gray-500 hover:text-gray-900 dark:hover:text-white"
                       }`}
                   >
                     This Month
@@ -4487,8 +4493,8 @@ export default function App() {
                     <button
                       onClick={() => setThemeMode("light")}
                       className={`p-3 rounded-2xl border text-xs font-bold transition-all flex flex-col items-center gap-1.5 cursor-pointer ${themeMode === "light"
-                          ? "bg-emerald-50 dark:bg-emerald-950 border-emerald-500 text-emerald-800 dark:text-emerald-300 shadow-xs"
-                          : "border-gray-200 dark:border-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800"
+                        ? "bg-emerald-50 dark:bg-emerald-950 border-emerald-500 text-emerald-800 dark:text-emerald-300 shadow-xs"
+                        : "border-gray-200 dark:border-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800"
                         }`}
                     >
                       <Sun className="w-4 h-4 text-amber-500" />
@@ -4498,8 +4504,8 @@ export default function App() {
                     <button
                       onClick={() => setThemeMode("dark")}
                       className={`p-3 rounded-2xl border text-xs font-bold transition-all flex flex-col items-center gap-1.5 cursor-pointer ${themeMode === "dark"
-                          ? "bg-emerald-50 dark:bg-emerald-950 border-emerald-500 text-emerald-800 dark:text-emerald-300 shadow-xs"
-                          : "border-gray-200 dark:border-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800"
+                        ? "bg-emerald-50 dark:bg-emerald-950 border-emerald-500 text-emerald-800 dark:text-emerald-300 shadow-xs"
+                        : "border-gray-200 dark:border-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800"
                         }`}
                     >
                       <Moon className="w-4 h-4 text-sky-400" />
@@ -4509,8 +4515,8 @@ export default function App() {
                     <button
                       onClick={() => setThemeMode("system")}
                       className={`p-3 rounded-2xl border text-xs font-bold transition-all flex flex-col items-center gap-1.5 cursor-pointer ${themeMode === "system"
-                          ? "bg-emerald-50 dark:bg-emerald-950 border-emerald-500 text-emerald-800 dark:text-emerald-300 shadow-xs"
-                          : "border-gray-200 dark:border-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800"
+                        ? "bg-emerald-50 dark:bg-emerald-950 border-emerald-500 text-emerald-800 dark:text-emerald-300 shadow-xs"
+                        : "border-gray-200 dark:border-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800"
                         }`}
                     >
                       <Sparkles className="w-4 h-4 text-emerald-500" />
@@ -4830,8 +4836,8 @@ export default function App() {
                       key={file.path}
                       onClick={() => setSelectedFile(file)}
                       className={`w-full text-left px-3.5 py-2.5 rounded-xl border text-xs font-medium transition-all flex items-center justify-between cursor-pointer ${selectedFile?.path === file.path
-                          ? "bg-emerald-50 dark:bg-emerald-950/60 border-emerald-400 text-emerald-900 dark:text-emerald-300 font-bold"
-                          : "border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800"
+                        ? "bg-emerald-50 dark:bg-emerald-950/60 border-emerald-400 text-emerald-900 dark:text-emerald-300 font-bold"
+                        : "border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800"
                         }`}
                     >
                       <span className="truncate">{file.path}</span>
