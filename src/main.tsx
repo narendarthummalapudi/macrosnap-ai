@@ -1,5 +1,6 @@
 import { createRoot } from 'react-dom/client';
 import App from './App.tsx';
+import { ErrorBoundary } from './ErrorBoundary.tsx';
 import './index.css';
 
 // PROTECT MAIN WINDOW: Prevent Firebase Auth OAuth bug from closing the main application.
@@ -12,4 +13,8 @@ window.close = function () {
     // We intentionally do NOT call originalWindowClose here, ensuring the main tab stays open!
 };
 
-createRoot(document.getElementById('root')!).render(<App />);
+createRoot(document.getElementById('root')!).render(
+    <ErrorBoundary>
+        <App />
+    </ErrorBoundary>
+);
