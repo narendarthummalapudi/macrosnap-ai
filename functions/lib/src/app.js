@@ -9,8 +9,6 @@ const path_1 = __importDefault(require("path"));
 const fs_1 = __importDefault(require("fs"));
 const genai_1 = require("@google/genai");
 const dotenv_1 = __importDefault(require("dotenv"));
-const auth_1 = require("./middleware/auth");
-const queries_1 = require("./db/queries");
 const cors_1 = __importDefault(require("cors"));
 dotenv_1.default.config();
 const app = (0, express_1.default)();
@@ -19,20 +17,29 @@ app.use((0, cors_1.default)({ origin: true, credentials: true })); // Allows fro
 app.get("/api/health", (req, res) => {
     res.json({ status: "ok" });
 });
+app.get("/", (_req, res) => {
+    res.status(200).json({ status: "alive" });
+});
 app.use(express_1.default.json({ limit: "50mb" }));
 app.use(express_1.default.urlencoded({ extended: true, limit: "50mb" }));
 // Initialize Gemini SDK with User-Agent header as required
-const apiKey = process.env.GEMINI_API_KEY || "";
-const ai = apiKey
-    ? new genai_1.GoogleGenAI({
+let aiInstance = null;
+function getAI() {
+    if (aiInstance)
+        return aiInstance;
+    const apiKey = process.env.GEMINI_API_KEY || "";
+    if (!apiKey)
+        return null;
+    aiInstance = new genai_1.GoogleGenAI({
         apiKey,
         httpOptions: {
             headers: {
                 "User-Agent": "aistudio-build",
             },
         },
-    })
-    : null;
+    });
+    return aiInstance;
+}
 const SYSTEM_PROMPT = `
 You are MacroSnap, a friendly AI nutrition buddy.
 
@@ -128,6 +135,7 @@ Provide rigorous nutritional analysis including full macro/micronutrient estimat
 app.post("/api/chat", async (req, res) => {
     try {
         const { message, image, history, mode = "general", useSearchGrounding = false } = req.body;
+        const ai = getAI();
         if (!ai) {
             return res.status(500).json({
                 error: "GEMINI_API_KEY is not configured on the server. Please check your environment variables.",
@@ -363,6 +371,7 @@ app.post("/api/food-search", async (req, res) => {
         if (!searchQuery || !searchQuery.trim()) {
             return res.status(400).json({ error: "Please enter a food query or nutrition question." });
         }
+        const ai = getAI();
         if (!ai) {
             return res.status(500).json({ error: "GEMINI_API_KEY is not configured on the server." });
         }
@@ -488,6 +497,7 @@ app.post("/api/send-whatsapp", async (req, res) => {
         if (!history || !Array.isArray(history) || history.length === 0) {
             return res.status(400).json({ error: "No conversation history available to summarize." });
         }
+        const ai = getAI();
         if (!ai) {
             return res.status(500).json({ error: "GEMINI_API_KEY is not configured." });
         }
@@ -601,6 +611,7 @@ app.post("/api/send-whatsapp", async (req, res) => {
 app.post("/api/music", async (req, res) => {
     try {
         const { prompt, genre, mood, duration, isInstrumental } = req.body;
+        const ai = getAI();
         if (!ai) {
             return res.status(500).json({ error: "Gemini API key is not configured on the server." });
         }
@@ -635,6 +646,7 @@ app.post("/api/music", async (req, res) => {
 app.post("/api/transcribe", async (req, res) => {
     try {
         const { audioData, mimeType } = req.body;
+        const ai = getAI();
         if (!ai) {
             return res.status(500).json({ error: "Gemini API key is not configured on the server." });
         }
@@ -678,6 +690,7 @@ app.post("/api/transcribe", async (req, res) => {
 app.post("/api/video", async (req, res) => {
     try {
         const { prompt, aspectRatio = "16:9", style = "Cinematic" } = req.body;
+        const ai = getAI();
         if (!ai) {
             return res.status(500).json({ error: "Gemini API key is not configured on the server." });
         }
@@ -709,36 +722,9 @@ app.post("/api/video", async (req, res) => {
 // ==================================================
 // CUSTOM SECURE OTP AUTH SYSTEM (EMAIL & WHATSAPP)
 // ==================================================
-const app_1 = require("firebase-admin/app");
-const auth_2 = require("firebase-admin/auth");
+const firebase_admin_1 = require("./lib/firebase-admin");
 const nodemailer_1 = __importDefault(require("nodemailer"));
 const crypto_1 = __importDefault(require("crypto"));
-// Read Firebase config to initialize Admin SDK
-const firebaseConfigPath = path_1.default.resolve(process.cwd(), "firebase-applet-config.json");
-let firebaseProjectId = "effective-moment-8dtd0";
-if (fs_1.default.existsSync(firebaseConfigPath)) {
-    try {
-        const cfg = JSON.parse(fs_1.default.readFileSync(firebaseConfigPath, "utf-8"));
-        if (cfg.projectId) {
-            firebaseProjectId = cfg.projectId;
-        }
-    }
-    catch (err) {
-        console.error("Error reading firebase-applet-config.json for admin initialization:", err);
-    }
-}
-// Initialize admin SDK
-if ((0, app_1.getApps)().length === 0) {
-    try {
-        (0, app_1.initializeApp)({
-            projectId: firebaseProjectId,
-        });
-        console.log("Firebase Admin SDK initialized successfully for project:", firebaseProjectId);
-    }
-    catch (err) {
-        console.error("Failed to initialize Firebase Admin SDK:", err.message);
-    }
-}
 const otpStore = new Map();
 // SMTP transporter setup for real Email OTP
 const createTransporter = () => {
@@ -916,7 +902,7 @@ app.post("/api/auth/verify-otp", async (req, res) => {
         let authError = null;
         // Generate custom Firebase Auth token using Admin SDK if initialized
         try {
-            customToken = await (0, auth_2.getAuth)().createCustomToken(uid, {
+            customToken = await (0, firebase_admin_1.getAdminAuth)().createCustomToken(uid, {
                 email: email || undefined,
                 phoneNumber: mobileNumber || undefined,
             });
@@ -989,86 +975,5 @@ app.get("/api/project-files", (_req, res) => {
     }
     catch (error) {
         return res.status(500).json({ error: error?.message });
-    }
-});
-// ==================================================
-// CLOUD SQL REST API ENDPOINTS (PROTECTED BY FIREBASE AUTH)
-// ==================================================
-// Sync or register user profile in Cloud SQL
-app.post("/api/db/sync-user", auth_1.requireAuth, async (req, res) => {
-    try {
-        const uid = req.user?.uid;
-        const email = req.user?.email || req.body?.email || "";
-        const displayName = req.body?.displayName || req.user?.name || "";
-        if (!uid) {
-            return res.status(401).json({ error: "Unauthorized: Missing user UID" });
-        }
-        const user = await (0, queries_1.getOrCreateUser)(uid, email, displayName);
-        return res.json({ success: true, user });
-    }
-    catch (error) {
-        console.error("Cloud SQL sync-user error:", error);
-        return res.status(500).json({ error: error.message || "Failed to sync user to Cloud SQL" });
-    }
-});
-// Get user meals from Cloud SQL
-app.get("/api/db/meals", auth_1.requireAuth, async (req, res) => {
-    try {
-        const uid = req.user?.uid;
-        if (!uid) {
-            return res.status(401).json({ error: "Unauthorized: Missing user UID" });
-        }
-        const meals = await (0, queries_1.getUserMeals)(uid);
-        return res.json({ success: true, meals });
-    }
-    catch (error) {
-        console.error("Cloud SQL get meals error:", error);
-        return res.status(500).json({ error: error.message || "Failed to fetch meals from Cloud SQL" });
-    }
-});
-// Save a meal to Cloud SQL
-app.post("/api/db/meals", auth_1.requireAuth, async (req, res) => {
-    try {
-        const uid = req.user?.uid;
-        if (!uid) {
-            return res.status(401).json({ error: "Unauthorized: Missing user UID" });
-        }
-        const { mealId, name, calories, protein, carbs, fat, imageUrl, notes, searchGrounded } = req.body;
-        if (!name) {
-            return res.status(400).json({ error: "Meal name is required" });
-        }
-        const newMeal = await (0, queries_1.createMeal)({
-            mealId: mealId || `meal_${Date.now()}`,
-            userId: uid,
-            name,
-            calories: Number(calories) || 0,
-            protein: Number(protein) || 0,
-            carbs: Number(carbs) || 0,
-            fat: Number(fat) || 0,
-            imageUrl,
-            notes,
-            searchGrounded: !!searchGrounded,
-        });
-        return res.json({ success: true, meal: newMeal });
-    }
-    catch (error) {
-        console.error("Cloud SQL create meal error:", error);
-        return res.status(500).json({ error: error.message || "Failed to save meal to Cloud SQL" });
-    }
-});
-// Delete a meal from Cloud SQL
-app.delete("/api/db/meals/:mealId", auth_1.requireAuth, async (req, res) => {
-    try {
-        const uid = req.user?.uid;
-        const { mealId } = req.params;
-        if (!uid) {
-            return res.status(401).json({ error: "Unauthorized: Missing user UID" });
-        }
-        await (0, queries_1.deleteMeal)(mealId, uid);
-        return res.json({ success: true, message: "Meal removed from Cloud SQL" });
-    }
-    catch (error) {
-        console.error("Cloud SQL delete meal error:", error);
-        return res.status(500).json({ error: error.message || "Failed to delete meal from Cloud SQL" });
     }
 });

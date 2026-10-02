@@ -634,19 +634,6 @@ export default function App() {
             { merge: true }
           );
 
-          // Synchronize to Cloud SQL via authenticated backend endpoint
-          const token = await user.getIdToken();
-          await fetch((import.meta.env.VITE_API_BASE_URL || "") + "/api/db/sync-user", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify({
-              displayName: user.displayName || userName || "MacroSnap User",
-              email: user.email || "",
-            }),
-          }).catch((e) => console.warn("Cloud SQL user sync warning:", e));
         } catch (err) {
           console.warn("Could not sync user profile:", err);
         }
@@ -875,7 +862,7 @@ export default function App() {
         const spokenText = foodSearchResult.is_comparison
           ? foodSearchResult.comparison_text
           : `${foodSearchResult.food_name}: ${foodSearchResult.calories} calories, ${foodSearchResult.protein_g} grams protein. ${foodSearchResult.notes || ""}`;
-        
+
         playTextToSpeech(spokenText);
 
         if (currentUser) {
@@ -923,7 +910,7 @@ export default function App() {
 
     window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(textToSpeak);
-    
+
     const voiceLangMap: Record<string, string> = {
       "English": "en-US",
       "Telugu": "te-IN",
@@ -1379,31 +1366,6 @@ export default function App() {
       }
       console.log("[Firestore Save] READ-BACK SUCCESS");
 
-      // Also persist to Cloud SQL relational database in background if available
-      try {
-        const token = await currentUser.getIdToken();
-        await fetch((import.meta.env.VITE_API_BASE_URL || "") + "/api/db/meals", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            mealId,
-            name: (name || "Logged Meal").slice(0, 150),
-            calories: Number(macros.calories) || 0,
-            protein: Number(macros.protein) || 0,
-            carbs: Number(macros.carbs) || 0,
-            fat: Number(macros.fat) || 0,
-            imageUrl: img || null,
-            notes: "Logged via MacroSnap AI Vision",
-            searchGrounded: !!searchGrounded,
-          }),
-        });
-      } catch (sqlErr) {
-        console.warn("Could not persist meal to Cloud SQL:", sqlErr);
-      }
-
       return verify.data();
     } catch (err: any) {
       console.error("REAL FIRESTORE SAVE FAILED:", err);
@@ -1753,7 +1715,7 @@ export default function App() {
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#00000006_1px,transparent_1px),linear-gradient(to_bottom,#00000006_1px,transparent_1px)] dark:bg-[linear-gradient(to_right,#ffffff05_1px,transparent_1px),linear-gradient(to_bottom,#ffffff05_1px,transparent_1px)] bg-[size:3.5rem_3.5rem] [mask-image:radial-gradient(ellipse_70%_60%_at_50%_0%,#000_70%,transparent_100%)] opacity-70 pointer-events-none" />
 
         <div className="w-full max-w-5xl grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-center relative z-10">
-          
+
           {/* LEFT COLUMN: HERO SHOWCASE (Visible on Tablet/Desktop, subtle compact badge on Mobile) */}
           <div className="hidden lg:flex lg:col-span-6 xl:col-span-7 flex-col justify-between p-8 xl:p-10 rounded-3xl bg-white/80 dark:bg-[#0c121e]/80 backdrop-blur-2xl border border-slate-200/80 dark:border-white/10 shadow-2xl shadow-cyan-950/10 relative overflow-hidden">
             <div className="absolute top-0 right-0 w-72 h-72 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
@@ -1891,7 +1853,7 @@ export default function App() {
                 {loginMethod === "options" && (
                   <div className="space-y-3 animate-in fade-in duration-300">
                     <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">Choose sign in method</p>
-                    
+
                     <button
                       onClick={() => {
                         setLoginMethod("email");
@@ -2050,11 +2012,10 @@ export default function App() {
                                     onChange={(e) => handleOtpBoxChange(e.target.value, index, emailOtpRefs)}
                                     onKeyDown={(e) => handleOtpBoxKeyDown(e, index, emailOtpRefs)}
                                     onPaste={(e) => handleOtpBoxPaste(e, emailOtpRefs)}
-                                    className={`w-full aspect-square text-center text-lg font-black rounded-xl sm:rounded-2xl border transition-all duration-200 outline-none tabular-nums min-h-[44px] ${
-                                      char
+                                    className={`w-full aspect-square text-center text-lg font-black rounded-xl sm:rounded-2xl border transition-all duration-200 outline-none tabular-nums min-h-[44px] ${char
                                         ? "border-emerald-600/60 bg-emerald-50/40 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-200 shadow-xs"
                                         : "border-gray-200 dark:border-gray-800 bg-gray-50/70 dark:bg-[#18211b] text-gray-900 dark:text-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/25 focus:scale-105"
-                                    }`}
+                                      }`}
                                     required
                                   />
                                 );
@@ -2068,9 +2029,8 @@ export default function App() {
                         <button
                           type="submit"
                           disabled={isSendingOtp || isVerifyingOtp || (!otpSent && resendCooldown > 0)}
-                          className={`w-full py-3.5 px-6 min-h-[48px] rounded-2xl bg-gradient-to-r from-cyan-600 via-blue-600 to-violet-600 hover:from-cyan-500 hover:to-violet-500 text-white font-bold text-sm shadow-lg shadow-cyan-600/30 transition-all flex items-center justify-center gap-2 cursor-pointer ${
-                            (isSendingOtp || isVerifyingOtp || (!otpSent && resendCooldown > 0)) ? "opacity-75 cursor-not-allowed" : "active:scale-98"
-                          }`}
+                          className={`w-full py-3.5 px-6 min-h-[48px] rounded-2xl bg-gradient-to-r from-cyan-600 via-blue-600 to-violet-600 hover:from-cyan-500 hover:to-violet-500 text-white font-bold text-sm shadow-lg shadow-cyan-600/30 transition-all flex items-center justify-center gap-2 cursor-pointer ${(isSendingOtp || isVerifyingOtp || (!otpSent && resendCooldown > 0)) ? "opacity-75 cursor-not-allowed" : "active:scale-98"
+                            }`}
                         >
                           {isSendingOtp ? "Sending code..." : isVerifyingOtp ? "Verifying..." : otpSent ? "Verify Code" : "Send OTP"}
                         </button>
@@ -2206,11 +2166,10 @@ export default function App() {
                                     onChange={(e) => handleOtpBoxChange(e.target.value, index, whatsappOtpRefs)}
                                     onKeyDown={(e) => handleOtpBoxKeyDown(e, index, whatsappOtpRefs)}
                                     onPaste={(e) => handleOtpBoxPaste(e, whatsappOtpRefs)}
-                                    className={`w-full aspect-square text-center text-lg font-black rounded-xl sm:rounded-2xl border transition-all duration-200 outline-none tabular-nums min-h-[44px] ${
-                                      char
+                                    className={`w-full aspect-square text-center text-lg font-black rounded-xl sm:rounded-2xl border transition-all duration-200 outline-none tabular-nums min-h-[44px] ${char
                                         ? "border-emerald-600/60 bg-emerald-50/40 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-200 shadow-xs"
                                         : "border-gray-200 dark:border-gray-800 bg-gray-50/70 dark:bg-[#18211b] text-gray-900 dark:text-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/25 focus:scale-105"
-                                    }`}
+                                      }`}
                                     required
                                   />
                                 );
@@ -2224,9 +2183,8 @@ export default function App() {
                         <button
                           type="submit"
                           disabled={isSendingOtp || isVerifyingOtp || (!otpSent && resendCooldown > 0)}
-                          className={`w-full py-3.5 px-6 min-h-[48px] rounded-2xl bg-gradient-to-r from-cyan-600 via-blue-600 to-violet-600 hover:from-cyan-500 hover:to-violet-500 text-white font-bold text-sm shadow-lg shadow-cyan-600/30 transition-all flex items-center justify-center gap-2 cursor-pointer ${
-                            (isSendingOtp || isVerifyingOtp || (!otpSent && resendCooldown > 0)) ? "opacity-75 cursor-not-allowed" : "active:scale-98"
-                          }`}
+                          className={`w-full py-3.5 px-6 min-h-[48px] rounded-2xl bg-gradient-to-r from-cyan-600 via-blue-600 to-violet-600 hover:from-cyan-500 hover:to-violet-500 text-white font-bold text-sm shadow-lg shadow-cyan-600/30 transition-all flex items-center justify-center gap-2 cursor-pointer ${(isSendingOtp || isVerifyingOtp || (!otpSent && resendCooldown > 0)) ? "opacity-75 cursor-not-allowed" : "active:scale-98"
+                            }`}
                         >
                           {isSendingOtp ? "Sending code..." : isVerifyingOtp ? "Verifying..." : otpSent ? "Verify Code" : "Send WhatsApp OTP"}
                         </button>
@@ -2349,11 +2307,10 @@ export default function App() {
                         setActiveSection(item.id as ActiveSection);
                         setMobileMenuOpen(false);
                       }}
-                      className={`w-full flex items-center gap-3 px-3.5 py-3 rounded-2xl text-xs font-bold transition-all cursor-pointer ${
-                        isActive
+                      className={`w-full flex items-center gap-3 px-3.5 py-3 rounded-2xl text-xs font-bold transition-all cursor-pointer ${isActive
                           ? "bg-gradient-to-r from-cyan-500/15 via-blue-500/15 to-violet-500/15 text-cyan-500 border border-cyan-500/30 shadow-xs"
                           : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/60"
-                      }`}
+                        }`}
                     >
                       <Icon className={`w-4 h-4 ${isActive ? "text-cyan-400" : ""}`} />
                       <span>{item.label}</span>
@@ -2419,11 +2376,10 @@ export default function App() {
               <button
                 key={item.id}
                 onClick={() => setActiveSection(item.id as ActiveSection)}
-                className={`w-full flex items-center justify-between px-3.5 py-3 rounded-2xl text-xs font-bold transition-all cursor-pointer group ${
-                  isActive
+                className={`w-full flex items-center justify-between px-3.5 py-3 rounded-2xl text-xs font-bold transition-all cursor-pointer group ${isActive
                     ? "bg-gradient-to-r from-cyan-500/15 via-blue-600/15 to-violet-600/15 text-cyan-600 dark:text-cyan-300 border border-cyan-500/30 dark:border-cyan-400/25 shadow-sm"
                     : "text-slate-600 dark:text-slate-400 hover:bg-slate-100/80 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white"
-                }`}
+                  }`}
               >
                 <div className="flex items-center gap-3">
                   <Icon className={`w-4 h-4 transition-transform group-hover:scale-110 ${isActive ? "text-cyan-500" : "text-slate-400"}`} />
@@ -2553,11 +2509,10 @@ export default function App() {
             <button
               onClick={handleSendToWhatsApp}
               disabled={!hasInteracted || isSendingWhatsApp}
-              className={`px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer min-h-[38px] ${
-                hasInteracted
+              className={`px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer min-h-[38px] ${hasInteracted
                   ? "bg-emerald-600 hover:bg-emerald-500 text-white shadow-md shadow-emerald-600/20 active:scale-95"
                   : "bg-slate-100 dark:bg-[#121926] text-slate-400 cursor-not-allowed border border-slate-200 dark:border-slate-800"
-              }`}
+                }`}
             >
               <Smartphone className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">{isSendingWhatsApp ? "Sending..." : "Send to WhatsApp"}</span>
@@ -2620,7 +2575,7 @@ export default function App() {
               ================================================== */}
           {activeSection === "dashboard" && (
             <div className="space-y-8 animate-in fade-in duration-300">
-              
+
               {/* ==================================================
                   FUTURISTIC AI HERO SECTION
                   ================================================== */}
@@ -2926,11 +2881,10 @@ export default function App() {
                       type="button"
                       onClick={handleStartVoiceSearch}
                       disabled={isListening}
-                      className={`p-2.5 rounded-xl transition-all cursor-pointer flex items-center justify-center ${
-                        isListening
+                      className={`p-2.5 rounded-xl transition-all cursor-pointer flex items-center justify-center ${isListening
                           ? "bg-red-500 text-white animate-pulse shadow-lg shadow-red-500/40 ring-4 ring-red-500/20"
                           : "bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-cyan-300 hover:bg-cyan-500/20 hover:border-cyan-400"
-                      }`}
+                        }`}
                       title="Speak your question"
                     >
                       <Mic className="w-5 h-5" />
@@ -3384,13 +3338,12 @@ export default function App() {
                       <button
                         onClick={handleSaveMealExplicit}
                         disabled={isSavingMealState}
-                        className={`flex-1 min-w-[160px] py-3 px-5 rounded-2xl font-bold text-xs sm:text-sm transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer shadow-lg active:scale-95 ${
-                          savedMealCheckmark
+                        className={`flex-1 min-w-[160px] py-3 px-5 rounded-2xl font-bold text-xs sm:text-sm transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer shadow-lg active:scale-95 ${savedMealCheckmark
                             ? "bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-emerald-500/30 scale-102"
                             : isSavingMealState
-                            ? "bg-slate-700 text-slate-300 cursor-not-allowed opacity-90"
-                            : "bg-gradient-to-r from-cyan-500 via-blue-600 to-violet-600 hover:from-cyan-400 hover:to-violet-500 text-white shadow-cyan-500/25 hover:shadow-cyan-500/40 hover:-translate-y-0.5"
-                        }`}
+                              ? "bg-slate-700 text-slate-300 cursor-not-allowed opacity-90"
+                              : "bg-gradient-to-r from-cyan-500 via-blue-600 to-violet-600 hover:from-cyan-400 hover:to-violet-500 text-white shadow-cyan-500/25 hover:shadow-cyan-500/40 hover:-translate-y-0.5"
+                          }`}
                       >
                         {isSavingMealState ? (
                           <>
@@ -3498,31 +3451,28 @@ export default function App() {
                   <div className="flex bg-gray-200/80 dark:bg-gray-800 p-1 rounded-xl text-xs font-semibold">
                     <button
                       onClick={() => setChatbotMode("fast")}
-                      className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
-                        chatbotMode === "fast"
+                      className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${chatbotMode === "fast"
                           ? "bg-white dark:bg-[#121814] text-emerald-800 dark:text-emerald-300 shadow-xs"
                           : "text-gray-500"
-                      }`}
+                        }`}
                     >
                       ⚡ Fast
                     </button>
                     <button
                       onClick={() => setChatbotMode("general")}
-                      className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
-                        chatbotMode === "general"
+                      className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${chatbotMode === "general"
                           ? "bg-white dark:bg-[#121814] text-emerald-800 dark:text-emerald-300 shadow-xs"
                           : "text-gray-500"
-                      }`}
+                        }`}
                     >
                       🥗 General
                     </button>
                     <button
                       onClick={() => setChatbotMode("complex")}
-                      className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
-                        chatbotMode === "complex"
+                      className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${chatbotMode === "complex"
                           ? "bg-white dark:bg-[#121814] text-emerald-800 dark:text-emerald-300 shadow-xs"
                           : "text-gray-500"
-                      }`}
+                        }`}
                     >
                       🧠 Deep
                     </button>
@@ -3530,11 +3480,10 @@ export default function App() {
 
                   <button
                     onClick={() => setUseSearchGrounding(!useSearchGrounding)}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all border cursor-pointer flex items-center gap-1.5 ${
-                      useSearchGrounding
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all border cursor-pointer flex items-center gap-1.5 ${useSearchGrounding
                         ? "bg-blue-600 text-white border-blue-600 shadow-xs"
                         : "bg-white dark:bg-[#1a231d] text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700"
-                    }`}
+                      }`}
                   >
                     <Globe className="w-3.5 h-3.5" />
                     <span>Search: {useSearchGrounding ? "ON" : "OFF"}</span>
@@ -3561,9 +3510,8 @@ export default function App() {
                 {messages.map((msg, index) => (
                   <div
                     key={index}
-                    className={`flex gap-3 animate-in fade-in duration-200 ${
-                      msg.role === "user" ? "justify-end" : "justify-start"
-                    }`}
+                    className={`flex gap-3 animate-in fade-in duration-200 ${msg.role === "user" ? "justify-end" : "justify-start"
+                      }`}
                   >
                     {msg.role === "assistant" && (
                       <div className="w-8 h-8 rounded-2xl bg-emerald-600 text-white flex items-center justify-center text-sm flex-shrink-0 shadow-xs">
@@ -3572,11 +3520,10 @@ export default function App() {
                     )}
 
                     <div
-                      className={`max-w-[85%] sm:max-w-[75%] rounded-3xl p-4 text-sm leading-relaxed ${
-                        msg.role === "user"
+                      className={`max-w-[85%] sm:max-w-[75%] rounded-3xl p-4 text-sm leading-relaxed ${msg.role === "user"
                           ? "bg-gradient-to-r from-emerald-600 to-green-600 text-white rounded-br-xs shadow-md shadow-emerald-950/10"
                           : "bg-gray-100/90 dark:bg-[#18211b] text-gray-900 dark:text-gray-100 border border-gray-200/60 dark:border-gray-800 rounded-bl-xs shadow-xs"
-                      }`}
+                        }`}
                     >
                       {msg.image && (
                         <div className="mb-3 rounded-2xl overflow-hidden border border-white/20 shadow-sm max-w-xs">
@@ -3629,9 +3576,8 @@ export default function App() {
                       )}
 
                       <div
-                        className={`text-[10px] mt-2 text-right ${
-                          msg.role === "user" ? "text-emerald-100" : "text-gray-400"
-                        }`}
+                        className={`text-[10px] mt-2 text-right ${msg.role === "user" ? "text-emerald-100" : "text-gray-400"
+                          }`}
                       >
                         {msg.timestamp}
                       </div>
@@ -3748,11 +3694,10 @@ export default function App() {
                   <button
                     type="button"
                     onClick={handleToggleVoice}
-                    className={`p-2 rounded-full transition-colors cursor-pointer ${
-                      isListening
+                    className={`p-2 rounded-full transition-colors cursor-pointer ${isListening
                         ? "bg-red-500 text-white animate-pulse"
                         : "text-gray-500 hover:text-emerald-600"
-                    }`}
+                      }`}
                     title="Voice input"
                   >
                     {isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
@@ -3798,31 +3743,28 @@ export default function App() {
                 <div className="flex items-center gap-1.5 bg-gray-100 dark:bg-gray-800 p-1 rounded-2xl">
                   <button
                     onClick={() => setNutritionTimeRange("today")}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                      nutritionTimeRange === "today"
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${nutritionTimeRange === "today"
                         ? "bg-white dark:bg-[#121814] text-emerald-800 dark:text-emerald-300 shadow-xs"
                         : "text-gray-500 hover:text-gray-900 dark:hover:text-white"
-                    }`}
+                      }`}
                   >
                     Today
                   </button>
                   <button
                     onClick={() => setNutritionTimeRange("week")}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                      nutritionTimeRange === "week"
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${nutritionTimeRange === "week"
                         ? "bg-white dark:bg-[#121814] text-emerald-800 dark:text-emerald-300 shadow-xs"
                         : "text-gray-500 hover:text-gray-900 dark:hover:text-white"
-                    }`}
+                      }`}
                   >
                     This Week
                   </button>
                   <button
                     onClick={() => setNutritionTimeRange("month")}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                      nutritionTimeRange === "month"
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${nutritionTimeRange === "month"
                         ? "bg-white dark:bg-[#121814] text-emerald-800 dark:text-emerald-300 shadow-xs"
                         : "text-gray-500 hover:text-gray-900 dark:hover:text-white"
-                    }`}
+                      }`}
                   >
                     This Month
                   </button>
@@ -4417,13 +4359,6 @@ export default function App() {
                             if (currentUser) {
                               try {
                                 await deleteDoc(doc(db, "users", currentUser.uid, "meals", toDeleteId));
-                                const token = await currentUser.getIdToken();
-                                await fetch((import.meta.env.VITE_API_BASE_URL || "") + `/api/db/meals/${toDeleteId}`, {
-                                  method: "DELETE",
-                                  headers: {
-                                    Authorization: `Bearer ${token}`,
-                                  },
-                                }).catch((e) => console.warn("Cloud SQL delete error:", e));
                               } catch (err) {
                                 console.warn("Could not delete from Firestore:", err);
                               }
@@ -4551,11 +4486,10 @@ export default function App() {
                   <div className="grid grid-cols-3 gap-2.5">
                     <button
                       onClick={() => setThemeMode("light")}
-                      className={`p-3 rounded-2xl border text-xs font-bold transition-all flex flex-col items-center gap-1.5 cursor-pointer ${
-                        themeMode === "light"
+                      className={`p-3 rounded-2xl border text-xs font-bold transition-all flex flex-col items-center gap-1.5 cursor-pointer ${themeMode === "light"
                           ? "bg-emerald-50 dark:bg-emerald-950 border-emerald-500 text-emerald-800 dark:text-emerald-300 shadow-xs"
                           : "border-gray-200 dark:border-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800"
-                      }`}
+                        }`}
                     >
                       <Sun className="w-4 h-4 text-amber-500" />
                       <span>Light</span>
@@ -4563,11 +4497,10 @@ export default function App() {
 
                     <button
                       onClick={() => setThemeMode("dark")}
-                      className={`p-3 rounded-2xl border text-xs font-bold transition-all flex flex-col items-center gap-1.5 cursor-pointer ${
-                        themeMode === "dark"
+                      className={`p-3 rounded-2xl border text-xs font-bold transition-all flex flex-col items-center gap-1.5 cursor-pointer ${themeMode === "dark"
                           ? "bg-emerald-50 dark:bg-emerald-950 border-emerald-500 text-emerald-800 dark:text-emerald-300 shadow-xs"
                           : "border-gray-200 dark:border-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800"
-                      }`}
+                        }`}
                     >
                       <Moon className="w-4 h-4 text-sky-400" />
                       <span>Dark</span>
@@ -4575,11 +4508,10 @@ export default function App() {
 
                     <button
                       onClick={() => setThemeMode("system")}
-                      className={`p-3 rounded-2xl border text-xs font-bold transition-all flex flex-col items-center gap-1.5 cursor-pointer ${
-                        themeMode === "system"
+                      className={`p-3 rounded-2xl border text-xs font-bold transition-all flex flex-col items-center gap-1.5 cursor-pointer ${themeMode === "system"
                           ? "bg-emerald-50 dark:bg-emerald-950 border-emerald-500 text-emerald-800 dark:text-emerald-300 shadow-xs"
                           : "border-gray-200 dark:border-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800"
-                      }`}
+                        }`}
                     >
                       <Sparkles className="w-4 h-4 text-emerald-500" />
                       <span>System</span>
@@ -4608,14 +4540,12 @@ export default function App() {
                         localStorage.setItem("macrosnap_demo_mode", String(newVal));
                         setToastMessage(newVal ? "Switched to Demo Mode 🟢" : "Switched to Gemini AI Mode ✨");
                       }}
-                      className={`w-12 h-6 rounded-full transition-colors relative cursor-pointer ${
-                        isDemoMode ? "bg-emerald-600" : "bg-gray-300 dark:bg-gray-700"
-                      }`}
+                      className={`w-12 h-6 rounded-full transition-colors relative cursor-pointer ${isDemoMode ? "bg-emerald-600" : "bg-gray-300 dark:bg-gray-700"
+                        }`}
                     >
                       <span
-                        className={`absolute top-1 left-1 bg-white w-4 h-4 rounded-full transition-transform ${
-                          isDemoMode ? "translate-x-6" : ""
-                        }`}
+                        className={`absolute top-1 left-1 bg-white w-4 h-4 rounded-full transition-transform ${isDemoMode ? "translate-x-6" : ""
+                          }`}
                       />
                     </button>
                   </div>
@@ -4678,14 +4608,12 @@ export default function App() {
                         localStorage.setItem("macrosnap_notifications", String(nextVal));
                         setToastMessage(nextVal ? "Notifications enabled 🔔" : "Notifications muted 🔕");
                       }}
-                      className={`w-12 h-6 rounded-full transition-colors relative cursor-pointer ${
-                        notificationsEnabled ? "bg-emerald-600" : "bg-gray-300 dark:bg-gray-700"
-                      }`}
+                      className={`w-12 h-6 rounded-full transition-colors relative cursor-pointer ${notificationsEnabled ? "bg-emerald-600" : "bg-gray-300 dark:bg-gray-700"
+                        }`}
                     >
                       <span
-                        className={`absolute top-1 left-1 bg-white w-4 h-4 rounded-full transition-transform ${
-                          notificationsEnabled ? "translate-x-6" : ""
-                        }`}
+                        className={`absolute top-1 left-1 bg-white w-4 h-4 rounded-full transition-transform ${notificationsEnabled ? "translate-x-6" : ""
+                          }`}
                       />
                     </button>
                   </div>
@@ -4901,11 +4829,10 @@ export default function App() {
                     <button
                       key={file.path}
                       onClick={() => setSelectedFile(file)}
-                      className={`w-full text-left px-3.5 py-2.5 rounded-xl border text-xs font-medium transition-all flex items-center justify-between cursor-pointer ${
-                        selectedFile?.path === file.path
+                      className={`w-full text-left px-3.5 py-2.5 rounded-xl border text-xs font-medium transition-all flex items-center justify-between cursor-pointer ${selectedFile?.path === file.path
                           ? "bg-emerald-50 dark:bg-emerald-950/60 border-emerald-400 text-emerald-900 dark:text-emerald-300 font-bold"
                           : "border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800"
-                      }`}
+                        }`}
                     >
                       <span className="truncate">{file.path}</span>
                       <span className="text-[10px] text-gray-400 uppercase font-mono">{file.language}</span>
@@ -5042,15 +4969,15 @@ export default function App() {
                   {selectedMealDetail.createdAt
                     ? typeof selectedMealDetail.createdAt === "string" && selectedMealDetail.createdAt.includes("T")
                       ? new Date(selectedMealDetail.createdAt).toLocaleDateString("en-US", {
-                          weekday: "short",
-                          month: "short",
-                          day: "numeric",
-                        }) +
-                        " at " +
-                        new Date(selectedMealDetail.createdAt).toLocaleTimeString([], {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })
+                        weekday: "short",
+                        month: "short",
+                        day: "numeric",
+                      }) +
+                      " at " +
+                      new Date(selectedMealDetail.createdAt).toLocaleTimeString([], {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })
                       : selectedMealDetail.createdAt
                     : "Logged Meal"}
                 </p>
@@ -5137,13 +5064,6 @@ export default function App() {
                     if (currentUser) {
                       try {
                         await deleteDoc(doc(db, "users", currentUser.uid, "meals", toDeleteId));
-                        const token = await currentUser.getIdToken();
-                        await fetch((import.meta.env.VITE_API_BASE_URL || "") + `/api/db/meals/${toDeleteId}`, {
-                          method: "DELETE",
-                          headers: {
-                            Authorization: `Bearer ${token}`,
-                          },
-                        }).catch((e) => console.warn("Cloud SQL delete error:", e));
                       } catch (err) {
                         console.warn("Could not delete from Firestore:", err);
                       }
@@ -5165,9 +5085,8 @@ export default function App() {
       <div className="md:hidden fixed bottom-0 left-0 right-0 z-30 bg-white/80 dark:bg-[#090e18]/85 backdrop-blur-2xl border-t border-slate-200/80 dark:border-white/10 px-3 py-2 flex items-center justify-around shadow-2xl">
         <button
           onClick={() => setActiveSection("dashboard")}
-          className={`flex flex-col items-center gap-1 p-1.5 rounded-2xl text-[10px] font-bold transition-all ${
-            activeSection === "dashboard" ? "text-cyan-500 scale-105" : "text-slate-400 hover:text-slate-200"
-          }`}
+          className={`flex flex-col items-center gap-1 p-1.5 rounded-2xl text-[10px] font-bold transition-all ${activeSection === "dashboard" ? "text-cyan-500 scale-105" : "text-slate-400 hover:text-slate-200"
+            }`}
         >
           <Home className="w-4 h-4" />
           <span>Home</span>
@@ -5175,9 +5094,8 @@ export default function App() {
 
         <button
           onClick={() => setActiveSection("analyzer")}
-          className={`flex flex-col items-center gap-1 p-1.5 rounded-2xl text-[10px] font-bold transition-all ${
-            activeSection === "analyzer" ? "text-cyan-500 scale-105" : "text-slate-400 hover:text-slate-200"
-          }`}
+          className={`flex flex-col items-center gap-1 p-1.5 rounded-2xl text-[10px] font-bold transition-all ${activeSection === "analyzer" ? "text-cyan-500 scale-105" : "text-slate-400 hover:text-slate-200"
+            }`}
         >
           <Camera className="w-4 h-4" />
           <span>Scan</span>
@@ -5185,9 +5103,8 @@ export default function App() {
 
         <button
           onClick={() => setActiveSection("chat")}
-          className={`flex flex-col items-center gap-1 p-1.5 rounded-2xl text-[10px] font-bold transition-all ${
-            activeSection === "chat" ? "text-cyan-500 scale-105" : "text-slate-400 hover:text-slate-200"
-          }`}
+          className={`flex flex-col items-center gap-1 p-1.5 rounded-2xl text-[10px] font-bold transition-all ${activeSection === "chat" ? "text-cyan-500 scale-105" : "text-slate-400 hover:text-slate-200"
+            }`}
         >
           <MessageSquare className="w-4 h-4" />
           <span>Chat</span>
@@ -5195,9 +5112,8 @@ export default function App() {
 
         <button
           onClick={() => setActiveSection("nutrition")}
-          className={`flex flex-col items-center gap-1 p-1.5 rounded-2xl text-[10px] font-bold transition-all ${
-            activeSection === "nutrition" ? "text-cyan-500 scale-105" : "text-slate-400 hover:text-slate-200"
-          }`}
+          className={`flex flex-col items-center gap-1 p-1.5 rounded-2xl text-[10px] font-bold transition-all ${activeSection === "nutrition" ? "text-cyan-500 scale-105" : "text-slate-400 hover:text-slate-200"
+            }`}
         >
           <PieChart className="w-4 h-4" />
           <span>Macros</span>
@@ -5205,9 +5121,8 @@ export default function App() {
 
         <button
           onClick={() => setActiveSection("settings")}
-          className={`flex flex-col items-center gap-1 p-1.5 rounded-2xl text-[10px] font-bold transition-all ${
-            activeSection === "settings" ? "text-cyan-500 scale-105" : "text-slate-400 hover:text-slate-200"
-          }`}
+          className={`flex flex-col items-center gap-1 p-1.5 rounded-2xl text-[10px] font-bold transition-all ${activeSection === "settings" ? "text-cyan-500 scale-105" : "text-slate-400 hover:text-slate-200"
+            }`}
         >
           <SettingsIcon className="w-4 h-4" />
           <span>Settings</span>

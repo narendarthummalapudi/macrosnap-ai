@@ -9,7 +9,8 @@ const requireAuth = async (req, res, next) => {
     }
     const token = authHeader.split('Bearer ')[1];
     try {
-        const decodedToken = await firebase_admin_1.adminAuth.verifyIdToken(token);
+        const adminAuth = (0, firebase_admin_1.getAdminAuth)();
+        const decodedToken = await adminAuth.verifyIdToken(token);
         req.user = decodedToken;
         next();
     }
