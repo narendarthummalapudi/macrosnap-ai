@@ -1,0 +1,12 @@
+{
+    "projectId": "ai-food-chatbot",
+    "appId": "1:1071789126618:web:20792d510c761b95c806e3",
+    "apiKey": "AIzaSyBSTXaSuEiVStjOpYaYYTjE74Lahm2NIN0",
+    "authDomain": "ai-food-chatbot.firebaseapp.com",
+    "firestoreDatabaseId": "ai-studio-macrosnapaivisio-71698b12-28d8-4788-a417-aee38be20636",
+    "storageBucket": "ai-food-chatbot.firebasestorage.app",
+    "messagingSenderId": "1071789126618",
+    "measurementId": "G-Z9BLDPKELS",
+    "oAuthClientId": "1071789126618-9pp3mo5adabaifm9j6algehlcnevbo61.apps.googleusercontent.com",
+    "recaptchaSiteKey": ""
+}

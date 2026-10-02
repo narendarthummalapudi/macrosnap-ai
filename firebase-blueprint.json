@@ -1,0 +1,112 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile with preferences and contact info",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "maxLength": 128 },
+        "name": { "type": "string", "maxLength": 100 },
+        "email": { "type": "string", "maxLength": 200 },
+        "whatsappNumber": { "type": "string", "maxLength": 30 },
+        "dailyCalorieTarget": { "type": "number" },
+        "dailyProteinTarget": { "type": "number" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["uid", "name"]
+    },
+    "Meal": {
+      "title": "Meal",
+      "description": "Logged meal with estimated macronutrients and timestamp",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "userId": { "type": "string", "maxLength": 128 },
+        "name": { "type": "string", "maxLength": 200 },
+        "calories": { "type": "number" },
+        "protein": { "type": "number" },
+        "carbs": { "type": "number" },
+        "fat": { "type": "number" },
+        "notes": { "type": "string", "maxLength": 1000 },
+        "imageUrl": { "type": "string", "maxLength": 2000 },
+        "searchGrounded": { "type": "boolean" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["id", "userId", "name", "calories", "protein", "carbs", "fat", "createdAt"]
+    },
+    "ChatMessage": {
+      "title": "ChatMessage",
+      "description": "Multi-turn conversation history message",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "userId": { "type": "string", "maxLength": 128 },
+        "role": { "type": "string", "enum": ["user", "assistant"] },
+        "kind": { "type": "string", "enum": ["text", "image"] },
+        "content": { "type": "string", "maxLength": 5000 },
+        "imageUrl": { "type": "string", "maxLength": 2000 },
+        "modelUsed": { "type": "string", "maxLength": 100 },
+        "searchGrounded": { "type": "boolean" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["id", "userId", "role", "kind", "content", "createdAt"]
+    },
+    "FoodSearch": {
+      "title": "FoodSearch",
+      "description": "Recent food search queries and nutrition results",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "userId": { "type": "string", "maxLength": 128 },
+        "query": { "type": "string", "maxLength": 500 },
+        "foodName": { "type": "string", "maxLength": 200 },
+        "calories": { "type": "number" },
+        "protein": { "type": "number" },
+        "carbs": { "type": "number" },
+        "fat": { "type": "number" },
+        "sugar": { "type": "number" },
+        "fiber": { "type": "number" },
+        "language": { "type": "string", "maxLength": 50 },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["id", "userId", "query", "createdAt"]
+    },
+    "VoiceHistory": {
+      "title": "VoiceHistory",
+      "description": "Voice questions and multilingual AI responses",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "userId": { "type": "string", "maxLength": 128 },
+        "question": { "type": "string", "maxLength": 1000 },
+        "response": { "type": "string", "maxLength": 5000 },
+        "inputLanguage": { "type": "string", "maxLength": 50 },
+        "responseLanguage": { "type": "string", "maxLength": 50 },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["id", "userId", "question", "response", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/User" },
+      "description": "Private user profiles"
+    },
+    "/users/{userId}/meals/{mealId}": {
+      "schema": { "$ref": "#/entities/Meal" },
+      "description": "Nutritional logs and meals logged by the user"
+    },
+    "/users/{userId}/chat_messages/{messageId}": {
+      "schema": { "$ref": "#/entities/ChatMessage" },
+      "description": "Persistent conversation turns for multi-turn Gemini chat"
+    },
+    "/users/{userId}/foodSearches/{searchId}": {
+      "schema": { "$ref": "#/entities/FoodSearch" },
+      "description": "Recent food searches"
+    },
+    "/users/{userId}/voiceHistory/{voiceId}": {
+      "schema": { "$ref": "#/entities/VoiceHistory" },
+      "description": "Voice conversation history"
+    }
+  }
+}

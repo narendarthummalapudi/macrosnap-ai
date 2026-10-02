@@ -1,0 +1,137 @@
+﻿src/App.tsx(646,23): error TS1005: ',' expected.
+src/App.tsx(646,30): error TS1005: ',' expected.
+src/App.tsx(646,31): error TS1005: ',' expected.
+src/App.tsx(669,22): error TS1005: ',' expected.
+src/App.tsx(669,29): error TS1005: ',' expected.
+src/App.tsx(669,41): error TS1005: ',' expected.
+src/App.tsx(763,60): error TS1005: ',' expected.
+src/App.tsx(763,72): error TS1005: ',' expected.
+src/App.tsx(763,84): error TS1005: ',' expected.
+src/App.tsx(763,93): error TS1005: ',' expected.
+src/App.tsx(763,97): error TS1005: '(' expected.
+src/App.tsx(763,98): error TS1005: ';' expected.
+src/App.tsx(763,101): error TS1005: ';' expected.
+src/App.tsx(763,103): error TS1434: Unexpected keyword or identifier.
+src/App.tsx(763,108): error TS1434: Unexpected keyword or identifier.
+src/App.tsx(763,116): error TS1434: Unexpected keyword or identifier.
+src/App.tsx(763,124): error TS1434: Unexpected keyword or identifier.
+src/App.tsx(763,134): error TS1434: Unexpected keyword or identifier.
+src/App.tsx(763,154): error TS1005: '(' expected.
+src/App.tsx(763,164): error TS1005: ')' expected.
+src/App.tsx(763,172): error TS1434: Unexpected keyword or identifier.
+src/App.tsx(763,176): error TS1434: Unexpected keyword or identifier.
+src/App.tsx(763,193): error TS1003: Identifier expected.
+src/App.tsx(771,29): error TS1434: Unexpected keyword or identifier.
+src/App.tsx(810,29): error TS1005: ';' expected.
+src/App.tsx(831,20): error TS1127: Invalid character.
+src/App.tsx(831,21): error TS1127: Invalid character.
+src/App.tsx(831,23): error TS1434: Unexpected keyword or identifier.
+src/App.tsx(871,24): error TS1005: ';' expected.
+src/App.tsx(871,52): error TS1127: Invalid character.
+src/App.tsx(878,14): error TS1005: ';' expected.
+src/App.tsx(878,43): error TS1128: Declaration or statement expected.
+src/App.tsx(878,45): error TS1434: Unexpected keyword or identifier.
+src/App.tsx(878,85): error TS1005: ';' expected.
+src/App.tsx(878,114): error TS1434: Unexpected keyword or identifier.
+src/App.tsx(878,129): error TS1005: ';' expected.
+src/App.tsx(884,30): error TS1005: ';' expected.
+src/App.tsx(904,20): error TS1127: Invalid character.
+src/App.tsx(904,21): error TS1127: Invalid character.
+src/App.tsx(904,23): error TS1434: Unexpected keyword or identifier.
+src/App.tsx(904,30): error TS1434: Unexpected keyword or identifier.
+src/App.tsx(904,49): error TS1434: Unexpected keyword or identifier.
+src/App.tsx(904,63): error TS1128: Declaration or statement expected.
+src/App.tsx(904,64): error TS1434: Unexpected keyword or identifier.
+src/App.tsx(904,75): error TS1005: '{' expected.
+src/App.tsx(904,81): error TS1003: Identifier expected.
+src/App.tsx(972,12): error TS1434: Unexpected keyword or identifier.
+src/App.tsx(972,48): error TS1005: ';' expected.
+src/App.tsx(972,50): error TS1002: Unterminated string literal.
+src/App.tsx(981,4): error TS1472: 'catch' or 'finally' expected.
+src/App.tsx(981,8): error TS1005: ';' expected.
+src/App.tsx(1351,19): error TS1005: ',' expected.
+src/App.tsx(1351,25): error TS1005: ',' expected.
+src/App.tsx(1351,30): error TS1005: ',' expected.
+src/App.tsx(1356,27): error TS1005: ']' expected.
+src/App.tsx(1356,31): error TS1005: ',' expected.
+src/App.tsx(1356,36): error TS1005: ',' expected.
+src/App.tsx(1356,39): error TS1005: ',' expected.
+src/App.tsx(1356,51): error TS1005: ',' expected.
+src/App.tsx(1357,27): error TS1005: ']' expected.
+src/App.tsx(1357,31): error TS1005: ',' expected.
+src/App.tsx(1357,37): error TS1005: ',' expected.
+src/App.tsx(1357,46): error TS1005: ',' expected.
+src/App.tsx(1357,58): error TS1005: ',' expected.
+src/App.tsx(1357,71): error TS1005: ',' expected.
+src/App.tsx(1396,29): error TS1005: ',' expected.
+src/App.tsx(1396,36): error TS1005: ',' expected.
+src/App.tsx(1396,37): error TS1005: ',' expected.
+src/App.tsx(1469,20): error TS1005: ',' expected.
+src/App.tsx(1469,26): error TS1005: ',' expected.
+src/App.tsx(1469,30): error TS1005: ',' expected.
+src/App.tsx(1469,35): error TS1005: ',' expected.
+src/App.tsx(1469,40): error TS1005: ',' expected.
+src/App.tsx(1469,43): error TS1005: ',' expected.
+src/App.tsx(1469,52): error TS1005: ',' expected.
+src/App.tsx(1469,55): error TS1005: ',' expected.
+src/App.tsx(1469,57): error TS1005: ',' expected.
+src/App.tsx(1523,21): error TS1005: ',' expected.
+src/App.tsx(1523,27): error TS1005: ',' expected.
+src/App.tsx(1523,39): error TS1005: ',' expected.
+src/App.tsx(1523,48): error TS1005: ',' expected.
+src/App.tsx(1523,53): error TS1005: ',' expected.
+src/App.tsx(1523,58): error TS1005: ',' expected.
+src/App.tsx(1523,67): error TS1005: ',' expected.
+src/App.tsx(1523,69): error TS1005: ',' expected.
+src/App.tsx(1523,78): error TS1005: ',' expected.
+src/App.tsx(1523,84): error TS1005: ',' expected.
+src/App.tsx(1523,87): error TS1005: ',' expected.
+src/App.tsx(1523,92): error TS1005: ',' expected.
+src/App.tsx(1523,100): error TS1005: ',' expected.
+src/App.tsx(1523,104): error TS1005: ',' expected.
+src/App.tsx(1523,114): error TS1005: ',' expected.
+src/App.tsx(1523,129): error TS1003: Identifier expected.
+src/App.tsx(1526,27): error TS1005: ',' expected.
+src/App.tsx(1526,34): error TS1005: ',' expected.
+src/App.tsx(1526,43): error TS1127: Invalid character.
+src/App.tsx(1526,45): error TS1127: Invalid character.
+src/App.tsx(1526,60): error TS1005: ',' expected.
+src/App.tsx(1526,68): error TS1005: ',' expected.
+src/App.tsx(1526,71): error TS1005: ',' expected.
+src/App.tsx(1526,78): error TS1005: ',' expected.
+src/App.tsx(1526,96): error TS1005: ',' expected.
+src/App.tsx(1526,100): error TS1127: Invalid character.
+src/App.tsx(1526,112): error TS1005: ',' expected.
+src/App.tsx(1526,115): error TS1005: ',' expected.
+src/App.tsx(1526,122): error TS1005: ',' expected.
+src/App.tsx(1526,138): error TS1005: ',' expected.
+src/App.tsx(1526,139): error TS1127: Invalid character.
+src/App.tsx(1526,157): error TS1005: ',' expected.
+src/App.tsx(1526,160): error TS1005: ',' expected.
+src/App.tsx(1526,167): error TS1005: ',' expected.
+src/App.tsx(1526,181): error TS1005: ',' expected.
+src/App.tsx(1526,182): error TS1127: Invalid character.
+src/App.tsx(1526,190): error TS1005: ',' expected.
+src/App.tsx(1526,193): error TS1005: ',' expected.
+src/App.tsx(1526,200): error TS1005: ',' expected.
+src/App.tsx(1526,212): error TS1005: ',' expected.
+src/App.tsx(1526,213): error TS1127: Invalid character.
+src/App.tsx(1526,215): error TS1127: Invalid character.
+src/App.tsx(1526,230): error TS1005: ',' expected.
+src/App.tsx(1526,237): error TS1005: ',' expected.
+src/App.tsx(1526,241): error TS1005: ',' expected.
+src/App.tsx(1526,253): error TS1005: ',' expected.
+src/App.tsx(1526,263): error TS1003: Identifier expected.
+src/App.tsx(1547,32): error TS1005: ',' expected.
+src/App.tsx(1547,33): error TS1005: ',' expected.
+src/App.tsx(1547,60): error TS1005: ',' expected.
+src/App.tsx(1547,64): error TS1002: Unterminated string literal.
+src/App.tsx(1548,9): error TS1005: ',' expected.
+src/App.tsx(1548,15): error TS1005: ',' expected.
+src/App.tsx(1549,16): error TS1005: ',' expected.
+src/App.tsx(1550,13): error TS1005: ',' expected.
+src/App.tsx(1557,7): error TS1135: Argument expression expected.
+src/App.tsx(1557,8): error TS1472: 'catch' or 'finally' expected.
+src/App.tsx(1615,5): error TS1005: 'try' expected.
+src/App.tsx(1622,1): error TS1128: Declaration or statement expected.
+src/App.tsx(5199,1): error TS1128: Declaration or statement expected.

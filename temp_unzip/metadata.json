@@ -1,0 +1,8 @@
+{
+  "name": "MacroSnap - AI Vision Nutrition Chatbot",
+  "description": "Snap meal photos, estimate calories and macros (protein, carbs, fat) with Gemini Vision, and send daily nutrition summaries to WhatsApp.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
