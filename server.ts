@@ -6,6 +6,7 @@ import { GoogleGenAI } from "@google/genai";
 import dotenv from "dotenv";
 import { requireAuth, type AuthRequest } from "./src/middleware/auth.ts";
 import { getOrCreateUser, getUserMeals, createMeal, deleteMeal } from "./src/db/queries.ts";
+import { sendWhatsAppMessage, sendOTP as twilioSendOTP, verifyOTP as twilioVerifyOTP } from "./src/services/twilioService.ts";
 
 import cors from "cors";
 
@@ -465,17 +466,18 @@ app.post("/api/send-whatsapp", async (req, res) => {
       return res.status(400).json({ error: "No conversation history available to summarize." });
     }
 
+    if (!whatsappNumber) {
+      return res.status(400).json({ error: "No WhatsApp number provided." });
+    }
+
     if (!ai) {
       return res.status(500).json({ error: "GEMINI_API_KEY is not configured." });
     }
 
-    // Prepare contents with conversation history + SUMMARY_REQUEST_PROMPT
     const contents: any[] = [];
     for (const turn of history) {
-      if (turn.role === "user") {
-        const parts: any[] = [];
-        if (turn.content) parts.push({ text: turn.content });
-        if (parts.length > 0) contents.push({ role: "user", parts });
+      if (turn.role === "user" && turn.content) {
+        contents.push({ role: "user", parts: [{ text: turn.content }] });
       } else if (turn.role === "assistant" && turn.content) {
         contents.push({ role: "model", parts: [{ text: turn.content }] });
       }
@@ -487,96 +489,72 @@ app.post("/api/send-whatsapp", async (req, res) => {
     });
 
     let summaryResponse: any;
-    const candidateModels = ["gemini-3.1-flash-lite", "gemini-flash-latest", "gemini-3.8-flash"];
-    let lastSummaryError: any = null;
-
+    const candidateModels = ["gemini-3.1-flash-lite", "gemini-flash-latest"];
     for (const modelCandidate of candidateModels) {
       try {
         summaryResponse = await ai.models.generateContent({
           model: modelCandidate,
           contents,
-          config: {
-            systemInstruction: SYSTEM_PROMPT,
-          },
+          config: { systemInstruction: SYSTEM_PROMPT },
         });
-        if (summaryResponse && summaryResponse.text) {
-          break;
-        }
+        if (summaryResponse && summaryResponse.text) break;
       } catch (err: any) {
-        lastSummaryError = err;
         console.warn(`Summary model ${modelCandidate} failed:`, err?.message || err);
       }
     }
 
     if (!summaryResponse || !summaryResponse.text) {
-      throw lastSummaryError || new Error("Failed to generate summary");
+      throw new Error("Failed to generate summary");
     }
 
     const rawSummary = summaryResponse.text || "No nutrition summary available.";
-    const cleanSummary = rawSummary.replace(/\s+/g, " ").trim().slice(0, 1500);
 
-    // Check if Twilio environment variables are configured
-    const twilioSid = process.env.TWILIO_ACCOUNT_SID;
-    const twilioAuthToken = process.env.TWILIO_AUTH_TOKEN;
-    const twilioFrom = process.env.TWILIO_WHATSAPP_FROM || "whatsapp:+14155238886";
-    const twilioContentSid = process.env.TWILIO_CONTENT_SID;
-
-    let twilioResult: any = null;
-    let deliveryMode = "simulated";
-
-    if (twilioSid && twilioAuthToken && twilioContentSid) {
-      try {
-        const twilioUrl = `https://api.twilio.com/2010-04-01/Accounts/${twilioSid}/Messages.json`;
-        const auth = Buffer.from(`${twilioSid}:${twilioAuthToken}`).toString("base64");
-
-        const contentVariables = JSON.stringify({
-          "1": userName || "Friend",
-          "2": cleanSummary,
-        });
-
-        const formData = new URLSearchParams();
-        formData.append("From", twilioFrom);
-        formData.append("To", `whatsapp:${whatsappNumber}`);
-        formData.append("ContentSid", twilioContentSid);
-        formData.append("ContentVariables", contentVariables);
-
-        const twilioRes = await fetch(twilioUrl, {
-          method: "POST",
-          headers: {
-            Authorization: `Basic ${auth}`,
-            "Content-Type": "application/x-www-form-urlencoded",
-          },
-          body: formData.toString(),
-        });
-
-        const twilioJson = await twilioRes.json();
-        if (twilioRes.ok) {
-          deliveryMode = "live";
-          twilioResult = { sid: twilioJson.sid, status: twilioJson.status };
-        } else {
-          console.warn("Twilio API response error:", twilioJson);
-          twilioResult = { error: twilioJson.message || "Twilio error" };
-        }
-      } catch (err: any) {
-        console.error("Twilio send failed:", err);
-        twilioResult = { error: err.message };
-      }
+    // Add WhatsApp sending via twilioService
+    try {
+      await sendWhatsAppMessage(whatsappNumber, `*🥗 MacroSnap Meal Summary for ${userName || "Friend"}*\n\n${rawSummary.trim()}`);
+      return res.json({
+        success: true,
+        summary: rawSummary,
+        message: "Summary sent via WhatsApp successfully."
+      });
+    } catch (twErr: any) {
+      console.error("Twilio summary send error:", twErr);
+      return res.status(500).json({ error: "Unable to send WhatsApp message. " + twErr.message });
     }
-
-    return res.json({
-      success: true,
-      userName,
-      whatsappNumber,
-      summary: rawSummary,
-      cleanSummary,
-      deliveryMode,
-      twilioResult,
-    });
   } catch (error: any) {
     console.error("WhatsApp summary error:", error);
     return res.status(500).json({ error: error?.message || "Failed to generate summary" });
   }
 });
+
+// API: Send Meal via WhatsApp (New endpoint as requested)
+app.post("/api/whatsapp/send-meal", async (req, res) => {
+  try {
+    const { phoneNumber, meal } = req.body;
+
+    if (!phoneNumber) {
+      return res.status(400).json({ success: false, message: "Phone number is required." });
+    }
+
+    if (!meal || !meal.name) {
+      return res.status(400).json({ success: false, message: "Valid meal details are required." });
+    }
+
+    const m = meal;
+    const text = `🍽️ *MacroSnap Meal Summary*\n\nFood: ${m.name}\nServing: ${m.serving || "Not available"}\n\n🔥 Calories: ${m.calories ?? "Not available"} kcal\n💪 Protein: ${m.protein ?? "Not available"} g\n🍞 Carbs: ${m.carbs ?? "Not available"} g\n🥑 Fat: ${m.fat ?? "Not available"} g\n🍬 Sugar: ${m.sugar ?? "Not available"} g\n🌾 Fiber: ${m.fiber ?? "Not available"} g\n\n_Generated by MacroSnap AI._`;
+
+    try {
+      await sendWhatsAppMessage(phoneNumber, text);
+      return res.json({ success: true, message: "Meal summary sent successfully" });
+    } catch (twErr: any) {
+      console.error("Twilio send-meal error:", twErr);
+      return res.status(500).json({ success: false, message: "Unable to send WhatsApp message" });
+    }
+  } catch (error: any) {
+    return res.status(500).json({ success: false, message: "Internal server error" });
+  }
+});
+
 
 // API: Generate Music using Lyria
 app.post("/api/music", async (req, res) => {
@@ -793,21 +771,43 @@ app.post("/api/auth/send-otp", async (req, res) => {
       });
     }
 
-    // Generate secure 6-digit OTP
+    // Twilio Verify Flow (Mobile Only)
+    if (mobileNumber) {
+      if (!process.env.TWILIO_VERIFY_SERVICE_SID) {
+        return res.status(500).json({ error: "Twilio Verify Service SID not configured on the server." });
+      }
+
+      try {
+        await twilioSendOTP(mobileNumber);
+
+        otpStore.set(target, {
+          otpHash: "twilio-managed",
+          expiresAt: now + 5 * 60 * 1000,
+          attempts: 0,
+          resendCooldown: now + 30 * 1000,
+        });
+
+        console.log(`[MacroSnap Secure Auth] Twilio Verify OTP sent to ${mobileNumber}`);
+        return res.json({ success: true, message: "Verification OTP code sent via Twilio." });
+      } catch (err: any) {
+        console.error("Twilio Verify send error:", err.message);
+        return res.status(500).json({ error: "Unable to send OTP. Please try again later." });
+      }
+    }
+
+    // Fallback Email Flow (Using internal otpStore)
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     const otpHash = crypto.createHash("sha256").update(otp).digest("hex");
 
-    // Save metadata
     otpStore.set(target, {
       otpHash,
-      expiresAt: now + 5 * 60 * 1000, // 5 minutes validity
+      expiresAt: now + 5 * 60 * 1000,
       attempts: 0,
-      resendCooldown: now + 30 * 1000, // 30 seconds cooldown
+      resendCooldown: now + 30 * 1000,
     });
 
     console.log(`[MacroSnap Secure Auth System] 🔐 OTP generated for ${target}`);
 
-    // Deliver via Email
     if (email) {
       const transporter = createTransporter();
       if (transporter) {
@@ -824,62 +824,20 @@ app.post("/api/auth/send-otp", async (req, res) => {
               <div style="background-color: #f0fdf4; border: 1px solid #bbf7d0; padding: 15px; text-align: center; font-size: 24px; font-weight: bold; letter-spacing: 4px; color: #15803d; border-radius: 8px; margin: 20px 0;">
                 ${otp}
               </div>
-              <p style="color: #64748b; font-size: 12px;">This code will expire in 5 minutes. If you did not request this, you can safely ignore this email.</p>
+              <p style="color: #64748b; font-size: 12px;">This code will expire in 5 minutes.</p>
             </div>
           `,
         });
         console.log(`[MacroSnap Auth] Real email OTP delivered to ${email}`);
       } else {
-        // Fallback: log prominently to the server logs for testing as instructed
         console.log(`\n===============================================\n🔐 [SECURE BACKEND LOG] EMAIL OTP for ${email}:\n👉 OTP CODE: ${otp}\n===============================================\n`);
-      }
-    }
-
-    // Deliver via WhatsApp
-    if (mobileNumber) {
-      const twilioSid = process.env.TWILIO_ACCOUNT_SID;
-      const twilioAuthToken = process.env.TWILIO_AUTH_TOKEN;
-      const twilioFrom = process.env.TWILIO_WHATSAPP_FROM || "whatsapp:+14155238886";
-
-      if (twilioSid && twilioAuthToken) {
-        try {
-          const twilioUrl = `https://api.twilio.com/2010-04-01/Accounts/${twilioSid}/Messages.json`;
-          const basicAuth = Buffer.from(`${twilioSid}:${twilioAuthToken}`).toString("base64");
-
-          const formData = new URLSearchParams();
-          formData.append("From", twilioFrom);
-          formData.append("To", `whatsapp:${mobileNumber}`);
-          formData.append("Body", `Your MacroSnap verification code is: ${otp}. It will expire in 5 minutes. 🥗`);
-
-          const twilioRes = await fetch(twilioUrl, {
-            method: "POST",
-            headers: {
-              Authorization: `Basic ${basicAuth}`,
-              "Content-Type": "application/x-www-form-urlencoded",
-            },
-            body: formData.toString(),
-          });
-
-          const twilioJson = await twilioRes.json();
-          if (twilioRes.ok) {
-            console.log(`[MacroSnap Auth] Real WhatsApp OTP delivered to ${mobileNumber} via Twilio SID: ${twilioJson.sid}`);
-          } else {
-            console.error("Twilio WhatsApp sending failed:", twilioJson);
-          }
-        } catch (err: any) {
-          console.error("Twilio API Call Error:", err.message);
-        }
-      } else {
-        // Fallback: log prominently to server logs for testing as instructed
-        console.log(`\n===============================================\n🔐 [SECURE BACKEND LOG] WHATSAPP OTP for ${mobileNumber}:\n👉 OTP CODE: ${otp}\n===============================================\n`);
       }
     }
 
     let devOtp: string | null = null;
     const isSmtpConfigured = !!(process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS);
-    const isTwilioConfigured = !!(process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN);
 
-    if ((email && !isSmtpConfigured) || (mobileNumber && !isTwilioConfigured)) {
+    if (email && !isSmtpConfigured) {
       devOtp = otp;
     }
 
@@ -890,7 +848,7 @@ app.post("/api/auth/send-otp", async (req, res) => {
     });
   } catch (error: any) {
     console.error("Send OTP Error:", error);
-    return res.status(500).json({ error: error?.message || "Failed to send verification code." });
+    return res.status(500).json({ error: "Failed to send verification code. Please try again later." });
   }
 });
 
@@ -905,35 +863,56 @@ app.post("/api/auth/verify-otp", async (req, res) => {
     }
 
     const otpData = otpStore.get(target);
-    if (!otpData) {
-      return res.status(400).json({ error: "No verification request found or session expired. Please request a new code." });
-    }
 
-    const now = Date.now();
-    // Check expiry
-    if (now > otpData.expiresAt) {
+    // Limit attempts globally (3 attempts max)
+    if (otpData && otpData.attempts >= 3) {
       otpStore.delete(target);
-      return res.status(400).json({ error: "The verification code has expired. Please request a new one." });
+      return res.status(429).json({ error: "Too many incorrect attempts. Please request a new code." });
     }
 
-    // Check attempts rate limit
-    if (otpData.attempts >= 3) {
-      otpStore.delete(target);
-      return res.status(400).json({ error: "Too many incorrect attempts. Please request a new code." });
+    // Twilio Verify Flow (Mobile)
+    if (mobileNumber) {
+      if (!process.env.TWILIO_VERIFY_SERVICE_SID) {
+        return res.status(500).json({ error: "Twilio Verify Service SID not configured on the server." });
+      }
+
+      try {
+        const verification = await twilioVerifyOTP(mobileNumber, otp.trim());
+        if (verification.status !== "approved") {
+          if (otpData) {
+            otpData.attempts += 1;
+            otpStore.set(target, otpData);
+          }
+          return res.status(400).json({ error: "Incorrect verification code." });
+        }
+      } catch (err: any) {
+        console.error("Twilio Verify OTP Error:", err.message);
+        return res.status(500).json({ error: "Unable to verify OTP. Please try again later." });
+      }
+    } else {
+      // Internal otpStore Hash Flow (Email)
+      if (!otpData) {
+        return res.status(400).json({ error: "No verification request found or session expired. Please request a new code." });
+      }
+
+      const now = Date.now();
+      if (now > otpData.expiresAt) {
+        otpStore.delete(target);
+        return res.status(400).json({ error: "The verification code has expired. Please request a new one." });
+      }
+
+      const inputHash = crypto.createHash("sha256").update(otp.trim()).digest("hex");
+      if (inputHash !== otpData.otpHash) {
+        otpData.attempts += 1;
+        const remaining = 3 - otpData.attempts;
+        otpStore.set(target, otpData);
+        return res.status(400).json({
+          error: `Incorrect verification code. ${remaining} ${remaining === 1 ? "attempt" : "attempts"} remaining.`,
+        });
+      }
     }
 
-    // Securely hash input OTP and compare
-    const inputHash = crypto.createHash("sha256").update(otp.trim()).digest("hex");
-    if (inputHash !== otpData.otpHash) {
-      otpData.attempts += 1;
-      const remaining = 3 - otpData.attempts;
-      otpStore.set(target, otpData);
-      return res.status(400).json({
-        error: `Incorrect verification code. ${remaining} ${remaining === 1 ? "attempt" : "attempts"} remaining.`,
-      });
-    }
-
-    // On Success: Clear OTP
+    // On Success: Clear tracking data
     otpStore.delete(target);
 
     // Create a deterministic unique ID based on target

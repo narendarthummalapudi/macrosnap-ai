@@ -1692,6 +1692,52 @@ export default function App() {
     }
   };
 
+  const [isSendingMealToWhatsApp, setIsSendingMealToWhatsApp] = useState(false);
+  const [sendMealSuccess, setSendMealSuccess] = useState<string | null>(null);
+  const [sendMealError, setSendMealError] = useState<string | null>(null);
+
+  const handleSendMealToWhatsApp = async (meal: any) => {
+    if (!whatsappNumber) {
+      setSendMealError("Please enter your WhatsApp number in the Settings tab first.");
+      return;
+    }
+
+    setIsSendingMealToWhatsApp(true);
+    setSendMealError(null);
+    setSendMealSuccess(null);
+
+    try {
+      const res = await fetch((import.meta.env.VITE_API_BASE_URL || "") + "/api/whatsapp/send-meal", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          phoneNumber: whatsappNumber,
+          meal: {
+            name: meal.food_name,
+            serving: meal.serving_size,
+            calories: meal.calories,
+            protein: meal.protein_g,
+            carbs: meal.carbs_g,
+            fat: meal.fat_g,
+            sugar: meal.sugar_g,
+            fiber: meal.fiber_g
+          }
+        })
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Failed to send meal summary");
+
+      setSendMealSuccess("✓ Sent to WhatsApp");
+      setTimeout(() => setSendMealSuccess(null), 3000);
+    } catch (err: any) {
+      setSendMealError("Failed to send. Try again.");
+      setTimeout(() => setSendMealError(null), 3000);
+    } finally {
+      setIsSendingMealToWhatsApp(false);
+    }
+  };
+
   // WhatsApp Summary Dispatch
   const handleSendToWhatsApp = async () => {
     setIsSendingWhatsApp(true);
@@ -1701,7 +1747,6 @@ export default function App() {
 
     try {
       if (isDemoMode) {
-        // Demo Mode: simulate realistic summary without real Twilio request
         await new Promise((r) => setTimeout(r, 1200));
         const demoSummary = `*🥗 MacroSnap Daily Summary for ${userName || "Friend"}*\n\n🔥 *Total Calories:* ${dailyTotals.calories} / ${calorieGoal} kcal\n💪 *Protein:* ${Math.round(dailyTotals.protein)}g / ${proteinGoal}g\n🍚 *Carbs:* ${Math.round(dailyTotals.carbs)}g\n🥑 *Fat:* ${Math.round(dailyTotals.fat)}g\n\n*Recent Meals:* ${savedMeals.length > 0 ? savedMeals.map((m) => m.name).join(", ") : "Healthy balanced lunch & snacks"}\n\n_Keep up the momentum and stay hydrated! 💧_`;
         setWhatsAppSummary(demoSummary);
@@ -1710,7 +1755,6 @@ export default function App() {
         return;
       }
 
-      // Live Gemini / Twilio Mode
       const historyPayload = messages.map((m) => ({
         role: m.role,
         content: m.content,
@@ -1875,7 +1919,7 @@ export default function App() {
                     </div>
                   </div>
                   <button
-                    onClick={() => setIsDarkMode(!isDarkMode)}
+                    onClick={() => setThemeMode(isDarkMode ? "light" : "dark")}
                     className="p-2.5 rounded-xl text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer min-h-[44px] min-w-[44px] flex items-center justify-center"
                     title="Toggle Theme"
                     aria-label="Toggle dark mode"
@@ -2590,7 +2634,7 @@ export default function App() {
 
             {/* Mobile theme toggle */}
             <button
-              onClick={() => setIsDarkMode(!isDarkMode)}
+              onClick={() => setThemeMode(isDarkMode ? "light" : "dark")}
               className="md:hidden p-2 rounded-xl text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 min-h-[40px] min-w-[40px] flex items-center justify-center"
             >
               {isDarkMode ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4" />}
@@ -3083,8 +3127,19 @@ export default function App() {
                       >
                         <span>+ Log Meal</span>
                       </button>
+
+                      <button
+                        disabled={isSendingMealToWhatsApp}
+                        onClick={() => handleSendMealToWhatsApp(foodSearchResult)}
+                        className="px-3.5 py-1.5 rounded-xl bg-emerald-100 hover:bg-emerald-200 dark:bg-emerald-900 dark:hover:bg-emerald-800 text-emerald-800 dark:text-emerald-200 font-bold text-xs shadow-sm flex items-center gap-1.5 cursor-pointer disabled:opacity-50 transition-colors"
+                      >
+                        <span>📱</span>
+                        <span>{isSendingMealToWhatsApp ? "Sending..." : (sendMealSuccess ? "✓ Sent" : "WhatsApp")}</span>
+                      </button>
                     </div>
                   </div>
+                  {sendMealError && <p className="text-red-500 text-xs font-bold text-right pt-1">{sendMealError}</p>}
+                  {sendMealSuccess && <p className="text-emerald-500 text-xs font-bold text-right pt-1">{sendMealSuccess}</p>}
 
                   {foodSearchResult.is_comparison && foodSearchResult.comparison_text && (
                     <div className="p-4 rounded-2xl bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900 text-sm text-gray-800 dark:text-gray-200 leading-relaxed">
